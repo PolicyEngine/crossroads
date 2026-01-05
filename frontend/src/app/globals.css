@@ -1,16 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
-  --teal-500: #14b8a6;
-  --teal-600: #0d9488;
+  /* PolicyEngine Design System Colors */
+  --pe-teal: #39C6C0;
+  --pe-teal-light: #F7FDFC;
+  --pe-teal-pressed: #227773;
+  --pe-blue: #2C6496;
+  --pe-blue-light: #D8E6F3;
+  --pe-dark-gray: #616161;
+  --pe-gray: #808080;
+  --pe-light-gray: #F2F2F2;
+  --pe-white: #FFFFFF;
+  --pe-dark-red: #b50d0d;
+
+  --background: #FFFFFF;
+  --foreground: #616161;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-roboto);
 }
 
 body {
@@ -25,7 +35,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--pe-light-gray);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -34,12 +44,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--pe-gray);
 }
 
 /* Focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid var(--teal-500);
+  outline: 2px solid var(--pe-teal);
   outline-offset: 2px;
 }
 
@@ -49,4 +59,23 @@ a,
 input,
 select {
   transition: all 0.15s ease;
+}
+
+/* PolicyEngine button styles */
+.btn-primary {
+  background-color: var(--pe-teal);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--pe-teal-pressed);
+}
+
+.btn-secondary {
+  background-color: var(--pe-blue);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #1d3e5e;
 }

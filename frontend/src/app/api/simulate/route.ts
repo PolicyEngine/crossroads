@@ -24,19 +24,21 @@ function generateMockMetrics(
   household: Household,
   eventType: LifeEventType
 ): { before: BenefitMetric[]; after: BenefitMetric[] } {
-  const { income, numChildren, filingStatus } = household;
+  const { income, childAges, filingStatus, spouseIncome } = household;
+  const numChildren = childAges.length;
+  const totalIncome = income + (filingStatus.startsWith('married') ? spouseIncome : 0);
 
   // Base calculations (simplified mock)
-  const baseIncomeTax = income * 0.22;
-  const basePayrollTax = income * 0.0765;
-  const baseEITC = income < 60000 && numChildren > 0 ? Math.min(6000, income * 0.1) : 0;
+  const baseIncomeTax = totalIncome * 0.22;
+  const basePayrollTax = totalIncome * 0.0765;
+  const baseEITC = totalIncome < 60000 && numChildren > 0 ? Math.min(6000, totalIncome * 0.1) : 0;
   const baseCTC = numChildren * 2000;
-  const baseSNAP = income < 40000 ? Math.max(0, (40000 - income) * 0.05) : 0;
-  const basePTC = income < 80000 ? Math.max(0, (80000 - income) * 0.03) : 0;
-  const baseMedicaid = income < 30000 ? 5000 : 0;
+  const baseSNAP = totalIncome < 40000 ? Math.max(0, (40000 - totalIncome) * 0.05) : 0;
+  const basePTC = totalIncome < 80000 ? Math.max(0, (80000 - totalIncome) * 0.03) : 0;
+  const baseMedicaid = totalIncome < 30000 ? 5000 : 0;
 
   // Apply life event changes
-  let afterIncome = income;
+  let afterIncome = totalIncome;
   let afterChildren = numChildren;
   let afterFilingStatus = filingStatus;
   let afterAge = household.age;
@@ -46,21 +48,22 @@ function generateMockMetrics(
       afterChildren += 1;
       break;
     case 'getting_married':
-      afterFilingStatus = 'married';
-      afterIncome = income * 1.5;
+      afterFilingStatus = 'married_jointly';
+      afterIncome = totalIncome * 1.5;
       break;
     case 'changing_income':
-      afterIncome = income * 1.2;
+      afterIncome = totalIncome * 1.2;
       break;
     case 'retiring':
-      afterIncome = income * 0.4;
+      afterIncome = totalIncome * 0.4;
       afterAge = 65;
       break;
     case 'moving_states':
       break;
   }
 
-  const afterIncomeTax = afterIncome * (afterFilingStatus === 'married' ? 0.18 : 0.22);
+  const isMarried = afterFilingStatus.startsWith('married');
+  const afterIncomeTax = afterIncome * (isMarried ? 0.18 : 0.22);
   const afterPayrollTax = afterIncome * 0.0765;
   const afterEITC = afterIncome < 60000 && afterChildren > 0 ? Math.min(7000, afterIncome * 0.1 * (afterChildren / Math.max(numChildren, 1))) : 0;
   const afterCTC = afterChildren * 2000;
@@ -112,9 +115,10 @@ function generateMockResult(
     0
   );
 
-  const beforeNetIncome = household.income - beforeTax + beforeBenefits;
+  const totalIncome = household.income + (household.filingStatus.startsWith('married') ? household.spouseIncome : 0);
+  const beforeNetIncome = totalIncome - beforeTax + beforeBenefits;
 
-  let afterGrossIncome = household.income;
+  let afterGrossIncome = totalIncome;
   if (lifeEvent.type === 'getting_married') afterGrossIncome *= 1.5;
   if (lifeEvent.type === 'changing_income') afterGrossIncome *= 1.2;
   if (lifeEvent.type === 'retiring') afterGrossIncome *= 0.4;

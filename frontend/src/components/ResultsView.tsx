@@ -104,8 +104,8 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
               labelStyle={{ color: '#374151' }}
             />
             <Legend />
-            <Bar dataKey="Before" fill="#94a3b8" radius={[0, 4, 4, 0]} />
-            <Bar dataKey="After" fill="#14b8a6" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="Before" fill="#808080" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="After" fill="#39C6C0" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -1,10 +1,13 @@
 export interface Household {
   state: string;
-  filingStatus: 'single' | 'married' | 'head_of_household';
+  filingStatus: 'single' | 'married_jointly' | 'married_separately' | 'head_of_household';
   income: number;
-  numChildren: number;
+  spouseIncome: number;
+  spouseAge: number;
+  childAges: number[]; // Array of child ages
   age: number;
-  hasESI: boolean; // Employer-sponsored insurance
+  hasESI: boolean;
+  spouseHasESI: boolean;
 }
 
 export type LifeEventType =

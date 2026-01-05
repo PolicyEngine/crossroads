@@ -12,9 +12,12 @@ const DEFAULT_HOUSEHOLD: Household = {
   state: 'CA',
   filingStatus: 'single',
   income: 50000,
-  numChildren: 0,
+  spouseIncome: 0,
+  spouseAge: 30,
+  childAges: [],
   age: 30,
   hasESI: false,
+  spouseHasESI: false,
 };
 
 export default function Home() {
@@ -71,12 +74,12 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       {step === 'household' && (
-        <div className="bg-gradient-to-br from-teal-600 to-teal-700 text-white py-12 px-4">
+        <div className="bg-gradient-to-br from-[#39C6C0] to-[#227773] text-white py-12 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-4">
               How will life changes affect your finances?
             </h1>
-            <p className="text-xl text-teal-100 max-w-2xl mx-auto">
+            <p className="text-xl text-[#F7FDFC] max-w-2xl mx-auto">
               Explore how major life events impact your taxes, benefits, and net income
               using PolicyEngine&apos;s simulation engine.
             </p>
@@ -96,11 +99,11 @@ export default function Home() {
               <div
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   step === s.key
-                    ? 'bg-teal-500 text-white'
+                    ? 'bg-[#39C6C0] text-white'
                     : s.key === 'household' ||
                       (s.key === 'event' && step !== 'household') ||
                       (s.key === 'results' && step === 'results')
-                    ? 'bg-teal-100 text-teal-700'
+                    ? 'bg-[#F7FDFC] text-[#227773]'
                     : 'bg-gray-200 text-gray-500'
                 }`}
               >
@@ -132,7 +135,7 @@ export default function Home() {
               <button
                 onClick={() => setStep('event')}
                 disabled={!canProceedToEvent}
-                className="px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
+                className="px-6 py-3 bg-[#39C6C0] hover:bg-[#227773] disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
               >
                 Continue to Life Events
               </button>
@@ -161,7 +164,7 @@ export default function Home() {
               <button
                 onClick={handleSimulate}
                 disabled={!canSimulate || isLoading}
-                className="px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                className="px-6 py-3 bg-[#39C6C0] hover:bg-[#227773] disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -207,7 +210,7 @@ export default function Home() {
             href="https://policyengine.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-teal-600 hover:underline"
+            className="text-[#39C6C0] hover:underline"
           >
             PolicyEngine
           </a>
