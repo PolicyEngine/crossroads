@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Household, LifeEventType, SimulationResult, BenefitMetric } from '@/types';
 
+const BACKEND_URL = process.env.BACKEND_URL;
+
+// Proxy to real Python backend if configured
+async function callRealBackend(body: unknown): Promise<SimulationResult> {
+  const response = await fetch(`${BACKEND_URL}/api/simulate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Backend request failed');
+  }
+
+  return response.json();
+}
+
+// Mock implementation for development
 function generateMockMetrics(
   household: Household,
   eventType: LifeEventType
@@ -28,21 +47,19 @@ function generateMockMetrics(
       break;
     case 'getting_married':
       afterFilingStatus = 'married';
-      afterIncome = income * 1.5; // Spouse brings income
+      afterIncome = income * 1.5;
       break;
     case 'changing_income':
-      afterIncome = income * 1.2; // 20% raise
+      afterIncome = income * 1.2;
       break;
     case 'retiring':
-      afterIncome = income * 0.4; // Social Security + savings
+      afterIncome = income * 0.4;
       afterAge = 65;
       break;
     case 'moving_states':
-      // State tax changes - simplified
       break;
   }
 
-  // Recalculate after event
   const afterIncomeTax = afterIncome * (afterFilingStatus === 'married' ? 0.18 : 0.22);
   const afterPayrollTax = afterIncome * 0.0765;
   const afterEITC = afterIncome < 60000 && afterChildren > 0 ? Math.min(7000, afterIncome * 0.1 * (afterChildren / Math.max(numChildren, 1))) : 0;
@@ -72,6 +89,59 @@ function generateMockMetrics(
   return { before: beforeMetrics, after: afterMetrics };
 }
 
+function generateMockResult(
+  household: Household,
+  lifeEvent: { type: LifeEventType; params?: Record<string, unknown> }
+): SimulationResult {
+  const { before: metrics } = generateMockMetrics(household, lifeEvent.type);
+
+  const beforeTax = metrics.reduce(
+    (sum, m) => (m.category === 'tax' ? sum + m.before : sum),
+    0
+  );
+  const afterTax = metrics.reduce(
+    (sum, m) => (m.category === 'tax' ? sum + m.after : sum),
+    0
+  );
+  const beforeBenefits = metrics.reduce(
+    (sum, m) => (m.category === 'benefit' || m.category === 'credit' ? sum + m.before : sum),
+    0
+  );
+  const afterBenefits = metrics.reduce(
+    (sum, m) => (m.category === 'benefit' || m.category === 'credit' ? sum + m.after : sum),
+    0
+  );
+
+  const beforeNetIncome = household.income - beforeTax + beforeBenefits;
+
+  let afterGrossIncome = household.income;
+  if (lifeEvent.type === 'getting_married') afterGrossIncome *= 1.5;
+  if (lifeEvent.type === 'changing_income') afterGrossIncome *= 1.2;
+  if (lifeEvent.type === 'retiring') afterGrossIncome *= 0.4;
+
+  const afterNetIncome = afterGrossIncome - afterTax + afterBenefits;
+
+  return {
+    before: {
+      netIncome: beforeNetIncome,
+      totalTax: beforeTax,
+      totalBenefits: beforeBenefits,
+      metrics,
+    },
+    after: {
+      netIncome: afterNetIncome,
+      totalTax: afterTax,
+      totalBenefits: afterBenefits,
+      metrics: metrics.map((m) => ({ ...m, before: m.after })),
+    },
+    diff: {
+      netIncome: afterNetIncome - beforeNetIncome,
+      totalTax: afterTax - beforeTax,
+      totalBenefits: afterBenefits - beforeBenefits,
+    },
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -80,64 +150,18 @@ export async function POST(request: NextRequest) {
       lifeEvent: { type: LifeEventType; params?: Record<string, unknown> };
     };
 
-    // Simulate processing delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Use real backend if configured, otherwise use mock
+    if (BACKEND_URL) {
+      const result = await callRealBackend(body);
+      return NextResponse.json(result);
+    }
 
-    const { before: metrics } = generateMockMetrics(household, lifeEvent.type);
-
-    // Calculate totals
-    const beforeTax = metrics.reduce(
-      (sum, m) => (m.category === 'tax' ? sum + m.before : sum),
-      0
-    );
-    const afterTax = metrics.reduce(
-      (sum, m) => (m.category === 'tax' ? sum + m.after : sum),
-      0
-    );
-    const beforeBenefits = metrics.reduce(
-      (sum, m) => (m.category === 'benefit' || m.category === 'credit' ? sum + m.before : sum),
-      0
-    );
-    const afterBenefits = metrics.reduce(
-      (sum, m) => (m.category === 'benefit' || m.category === 'credit' ? sum + m.after : sum),
-      0
-    );
-
-    const beforeNetIncome = household.income - beforeTax + beforeBenefits;
-
-    // Adjust income for life event
-    let afterGrossIncome = household.income;
-    if (lifeEvent.type === 'getting_married') afterGrossIncome *= 1.5;
-    if (lifeEvent.type === 'changing_income') afterGrossIncome *= 1.2;
-    if (lifeEvent.type === 'retiring') afterGrossIncome *= 0.4;
-
-    const afterNetIncome = afterGrossIncome - afterTax + afterBenefits;
-
-    const result: SimulationResult = {
-      before: {
-        netIncome: beforeNetIncome,
-        totalTax: beforeTax,
-        totalBenefits: beforeBenefits,
-        metrics,
-      },
-      after: {
-        netIncome: afterNetIncome,
-        totalTax: afterTax,
-        totalBenefits: afterBenefits,
-        metrics: metrics.map((m) => ({ ...m, before: m.after })),
-      },
-      diff: {
-        netIncome: afterNetIncome - beforeNetIncome,
-        totalTax: afterTax - beforeTax,
-        totalBenefits: afterBenefits - beforeBenefits,
-      },
-    };
-
+    // Mock implementation
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const result = generateMockResult(household, lifeEvent);
     return NextResponse.json(result);
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to simulate' },
-      { status: 500 }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to simulate';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
