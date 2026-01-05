@@ -150,6 +150,24 @@ export default function HouseholdForm({
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
         </div>
+
+        {/* Employer-Sponsored Insurance */}
+        <div className="flex items-center gap-3">
+          <input
+            id="hasESI"
+            type="checkbox"
+            checked={household.hasESI}
+            onChange={(e) => updateField('hasESI', e.target.checked)}
+            disabled={disabled}
+            className="h-4 w-4 text-teal-500 border-gray-300 rounded focus:ring-teal-500 disabled:cursor-not-allowed"
+          />
+          <label
+            htmlFor="hasESI"
+            className="text-sm font-medium text-gray-700"
+          >
+            I have employer-sponsored health insurance
+          </label>
+        </div>
       </div>
     </div>
   );

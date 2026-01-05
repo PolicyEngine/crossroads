@@ -4,6 +4,7 @@ export interface Household {
   income: number;
   numChildren: number;
   age: number;
+  hasESI: boolean; // Employer-sponsored insurance
 }
 
 export type LifeEventType =
@@ -11,7 +12,10 @@ export type LifeEventType =
   | 'moving_states'
   | 'getting_married'
   | 'changing_income'
-  | 'retiring';
+  | 'retiring'
+  | 'pregnancy'
+  | 'divorce'
+  | 'unemployment';
 
 export interface LifeEvent {
   type: LifeEventType;
@@ -57,22 +61,40 @@ export const LIFE_EVENTS: LifeEvent[] = [
     icon: '👶',
   },
   {
+    type: 'pregnancy',
+    label: 'Getting Pregnant',
+    description: 'Pregnancy coverage and planning',
+    icon: '🤰',
+  },
+  {
+    type: 'getting_married',
+    label: 'Getting Married',
+    description: 'Combine households with a spouse',
+    icon: '💍',
+  },
+  {
+    type: 'divorce',
+    label: 'Getting Divorced',
+    description: 'Separate from your spouse',
+    icon: '💔',
+  },
+  {
     type: 'moving_states',
     label: 'Moving States',
     description: 'Relocate to a different state',
     icon: '🏠',
   },
   {
-    type: 'getting_married',
-    label: 'Getting Married',
-    description: 'Change filing status to married',
-    icon: '💍',
-  },
-  {
     type: 'changing_income',
     label: 'Changing Income',
     description: 'Simulate a raise or income change',
     icon: '💰',
+  },
+  {
+    type: 'unemployment',
+    label: 'Losing Your Job',
+    description: 'Transition to unemployment benefits',
+    icon: '📉',
   },
   {
     type: 'retiring',

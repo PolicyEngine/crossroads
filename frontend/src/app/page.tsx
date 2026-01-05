@@ -14,6 +14,7 @@ const DEFAULT_HOUSEHOLD: Household = {
   income: 50000,
   numChildren: 0,
   age: 30,
+  hasESI: false,
 };
 
 export default function Home() {
@@ -146,6 +147,7 @@ export default function Home() {
               onSelect={setSelectedEvent}
               eventParams={eventParams}
               onParamsChange={setEventParams}
+              household={household}
               disabled={isLoading}
             />
             <div className="mt-6 flex justify-between">
