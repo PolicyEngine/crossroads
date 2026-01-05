@@ -68,8 +68,9 @@ def create_household_from_request(data: dict) -> Household:
     )
     members.append(head)
 
-    # Add spouse if married
-    if data.get("filingStatus") == "married":
+    # Add spouse if married (jointly or separately)
+    filing_status = data.get("filingStatus", "single")
+    if filing_status in ("married_jointly", "married_separately"):
         spouse = Person(
             age=data.get("spouseAge", data.get("age", 30)),
             employment_income=data.get("spouseIncome", 0),
@@ -77,10 +78,10 @@ def create_household_from_request(data: dict) -> Household:
         )
         members.append(spouse)
 
-    # Add children
-    num_children = data.get("numChildren", 0)
-    for i in range(num_children):
-        child = Person(age=data.get("childAges", [10])[i] if i < len(data.get("childAges", [])) else 10)
+    # Add children from childAges array
+    child_ages = data.get("childAges", [])
+    for age in child_ages:
+        child = Person(age=age)
         members.append(child)
 
     return Household(

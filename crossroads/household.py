@@ -123,12 +123,13 @@ class Household:
                 dependents.append(person_id)
 
         tax_unit = {"members": tax_unit_members}
+        # Mark head/spouse roles on the people, not on tax_unit
         if head:
-            tax_unit["head"] = head
+            people[head]["is_tax_unit_head"] = {self.year: True}
         if spouse:
-            tax_unit["spouse"] = spouse
-        if dependents:
-            tax_unit["dependents"] = dependents
+            people[spouse]["is_tax_unit_spouse"] = {self.year: True}
+        for dep in dependents:
+            people[dep]["is_tax_unit_dependent"] = {self.year: True}
 
         household_dict = {
             "members": household_members,
