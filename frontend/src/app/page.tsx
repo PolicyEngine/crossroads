@@ -1,65 +1,216 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import HouseholdForm from '@/components/HouseholdForm';
+import LifeEventSelector from '@/components/LifeEventSelector';
+import ResultsView from '@/components/ResultsView';
+import { Household, LifeEventType, SimulationResult } from '@/types';
+
+type Step = 'household' | 'event' | 'results';
+
+const DEFAULT_HOUSEHOLD: Household = {
+  state: 'CA',
+  filingStatus: 'single',
+  income: 50000,
+  numChildren: 0,
+  age: 30,
+};
 
 export default function Home() {
+  const [step, setStep] = useState<Step>('household');
+  const [household, setHousehold] = useState<Household>(DEFAULT_HOUSEHOLD);
+  const [selectedEvent, setSelectedEvent] = useState<LifeEventType | null>(null);
+  const [eventParams, setEventParams] = useState<Record<string, unknown>>({});
+  const [result, setResult] = useState<SimulationResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSimulate = async () => {
+    if (!selectedEvent) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          household,
+          lifeEvent: { type: selectedEvent, params: eventParams },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Simulation failed');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      setStep('results');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setStep('household');
+    setSelectedEvent(null);
+    setEventParams({});
+    setResult(null);
+    setError(null);
+  };
+
+  const canProceedToEvent = household.income >= 0;
+  const canSimulate = selectedEvent !== null;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      {step === 'household' && (
+        <div className="bg-gradient-to-br from-teal-600 to-teal-700 text-white py-12 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl font-bold mb-4">
+              How will life changes affect your finances?
+            </h1>
+            <p className="text-xl text-teal-100 max-w-2xl mx-auto">
+              Explore how major life events impact your taxes, benefits, and net income
+              using PolicyEngine&apos;s simulation engine.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      )}
+
+      {/* Progress Steps */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-center gap-4 mb-8">
+          {[
+            { key: 'household', label: '1. Your Household' },
+            { key: 'event', label: '2. Life Event' },
+            { key: 'results', label: '3. Results' },
+          ].map((s, i) => (
+            <div key={s.key} className="flex items-center">
+              <div
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  step === s.key
+                    ? 'bg-teal-500 text-white'
+                    : s.key === 'household' ||
+                      (s.key === 'event' && step !== 'household') ||
+                      (s.key === 'results' && step === 'results')
+                    ? 'bg-teal-100 text-teal-700'
+                    : 'bg-gray-200 text-gray-500'
+                }`}
+              >
+                {s.label}
+              </div>
+              {i < 2 && (
+                <div className="w-8 h-0.5 bg-gray-300 mx-2" />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* Step Content */}
+        {step === 'household' && (
+          <div className="max-w-xl mx-auto">
+            <HouseholdForm
+              household={household}
+              onChange={setHousehold}
+              disabled={isLoading}
             />
-            Deploy Now
-          </a>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setStep('event')}
+                disabled={!canProceedToEvent}
+                className="px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
+              >
+                Continue to Life Events
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'event' && (
+          <div className="max-w-xl mx-auto">
+            <LifeEventSelector
+              selectedEvent={selectedEvent}
+              onSelect={setSelectedEvent}
+              eventParams={eventParams}
+              onParamsChange={setEventParams}
+              disabled={isLoading}
+            />
+            <div className="mt-6 flex justify-between">
+              <button
+                onClick={() => setStep('household')}
+                disabled={isLoading}
+                className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleSimulate}
+                disabled={!canSimulate || isLoading}
+                className="px-6 py-3 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Simulating...
+                  </>
+                ) : (
+                  'See Results'
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 'results' && result && (
+          <ResultsView result={result} onReset={handleReset} />
+        )}
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-auto py-8 text-center text-gray-500 text-sm">
+        <p>
+          Powered by{' '}
           <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href="https://policyengine.org"
             target="_blank"
             rel="noopener noreferrer"
+            className="text-teal-600 hover:underline"
           >
-            Documentation
+            PolicyEngine
           </a>
-        </div>
-      </main>
+        </p>
+      </footer>
     </div>
   );
 }

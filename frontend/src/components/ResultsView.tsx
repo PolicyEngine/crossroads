@@ -100,7 +100,7 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
             />
             <YAxis type="category" dataKey="name" width={95} fontSize={12} />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
+              formatter={(value) => formatCurrency(value as number)}
               labelStyle={{ color: '#374151' }}
             />
             <Legend />
@@ -153,7 +153,7 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
             />
             <YAxis type="category" dataKey="name" width={95} fontSize={12} />
             <Tooltip
-              formatter={(value: number) => formatChange(value)}
+              formatter={(value) => formatChange(value as number)}
               labelStyle={{ color: '#374151' }}
             />
             <Bar dataKey="change" radius={[0, 4, 4, 0]}>
@@ -169,10 +169,10 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 }
 
 function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
-  const categories = {
-    tax: { label: 'Taxes', items: [] as BenefitMetric[] },
-    credit: { label: 'Tax Credits', items: [] as BenefitMetric[] },
-    benefit: { label: 'Benefits', items: [] as BenefitMetric[] },
+  const categories: Record<string, { label: string; items: BenefitMetric[] }> = {
+    tax: { label: 'Taxes', items: [] },
+    credit: { label: 'Tax Credits', items: [] },
+    benefit: { label: 'Benefits', items: [] },
   };
 
   metrics.forEach((m) => {
