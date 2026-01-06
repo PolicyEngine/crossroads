@@ -69,20 +69,21 @@ export default function LifeEventSelector({
               <div>
                 <label className="label">Spouse&apos;s Annual Income</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
                   <input
                     type="number"
                     min="0"
                     step="1000"
                     value={(eventParams.spouseIncome as number) || 0}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
                       onParamsChange({
                         ...eventParams,
-                        spouseIncome: Math.max(0, parseInt(e.target.value) || 0),
-                      })
-                    }
+                        spouseIncome: isNaN(val) ? 0 : Math.max(0, val),
+                      });
+                    }}
                     disabled={disabled}
-                    className="input-field pl-7"
+                    className="input-field pl-8"
                   />
                 </div>
               </div>
@@ -180,20 +181,21 @@ export default function LifeEventSelector({
           <div className="mt-4 pt-4 border-t border-gray-100">
             <label className="label">New Annual Income</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
               <input
                 type="number"
                 min="0"
                 step="1000"
                 value={(eventParams.newIncome as number) || Math.round(household.income * 1.2)}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
                   onParamsChange({
                     ...eventParams,
-                    newIncome: Math.max(0, parseInt(e.target.value) || 0),
-                  })
-                }
+                    newIncome: isNaN(val) ? 0 : Math.max(0, val),
+                  });
+                }}
                 disabled={disabled}
-                className="input-field pl-7"
+                className="input-field pl-8"
               />
             </div>
             <p className="mt-1.5 text-xs text-gray-500">
@@ -207,20 +209,21 @@ export default function LifeEventSelector({
           <div className="mt-4 pt-4 border-t border-gray-100">
             <label className="label">Expected Weekly Unemployment Benefits</label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
               <input
                 type="number"
                 min="0"
                 step="50"
                 value={(eventParams.weeklyBenefits as number) || 400}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
                   onParamsChange({
                     ...eventParams,
-                    weeklyBenefits: Math.max(0, parseInt(e.target.value) || 0),
-                  })
-                }
+                    weeklyBenefits: isNaN(val) ? 0 : Math.max(0, val),
+                  });
+                }}
                 disabled={disabled}
-                className="input-field pl-7"
+                className="input-field pl-8"
               />
             </div>
             <p className="mt-1.5 text-xs text-gray-500">
@@ -251,14 +254,14 @@ export default function LifeEventSelector({
                 disabled={disabled}
                 className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
                   isSelected
-                    ? 'border-[#39C6C0] bg-[#F7FDFC] shadow-sm'
-                    : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                    ? 'border-[#319795] bg-[#E6FFFA] shadow-sm'
+                    : 'border-[#E2E8F0] hover:border-[#CBD5E1] hover:bg-[#F9FAFB]'
                 } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div className="flex items-center gap-4">
                   <span
                     className={`text-2xl w-10 h-10 flex items-center justify-center rounded-lg ${
-                      isSelected ? 'bg-[#E8F8F7]' : 'bg-gray-100'
+                      isSelected ? 'bg-[#B2F5EA]' : 'bg-[#F2F4F7]'
                     }`}
                     role="img"
                     aria-label={event.label}
@@ -270,7 +273,7 @@ export default function LifeEventSelector({
                     <p className="text-sm text-gray-500 mt-0.5">{event.description}</p>
                   </div>
                   {isSelected && (
-                    <svg className="w-5 h-5 text-[#39C6C0] shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-[#319795] shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fillRule="evenodd"
                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"

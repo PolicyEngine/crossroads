@@ -137,8 +137,8 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
               wrapperStyle={{ paddingTop: '16px' }}
               formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
             />
-            <Bar dataKey="Before" fill="#9ca3af" radius={[0, 4, 4, 0]} />
-            <Bar dataKey="After" fill="#39C6C0" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="Before" fill="#9CA3AF" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="After" fill="#319795" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -356,13 +356,13 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
 
       {/* View Toggle */}
       <div className="flex justify-center">
-        <div className="inline-flex rounded-xl border border-gray-200 p-1 bg-white">
+        <div className="inline-flex rounded-xl border border-[#E2E8F0] p-1 bg-white">
           <button
             onClick={() => setShowAllBenefits(false)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               !showAllBenefits
-                ? 'bg-[#39C6C0] text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#319795] text-white shadow-sm'
+                : 'text-[#5A5A5A] hover:bg-[#F9FAFB]'
             }`}
           >
             Key Changes
@@ -371,8 +371,8 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
             onClick={() => setShowAllBenefits(true)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               showAllBenefits
-                ? 'bg-[#39C6C0] text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-[#319795] text-white shadow-sm'
+                : 'text-[#5A5A5A] hover:bg-[#F9FAFB]'
             }`}
           >
             All Benefits ({result.before.metrics.length})
@@ -386,7 +386,7 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
           {secondaryWithValues.length} additional benefit{secondaryWithValues.length !== 1 ? 's' : ''} not shown.{' '}
           <button
             onClick={() => setShowAllBenefits(true)}
-            className="text-[#39C6C0] hover:text-[#227773] font-medium transition-colors"
+            className="text-[#319795] hover:text-[#285E61] font-medium transition-colors"
           >
             Show all
           </button>

@@ -6,7 +6,7 @@ export default function Header() {
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-[#39C6C0] to-[#2eb8b2] rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+            <div className="w-9 h-9 bg-gradient-to-br from-[#319795] to-[#2C7A7B] rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"

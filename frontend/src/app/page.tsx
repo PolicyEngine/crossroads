@@ -82,7 +82,7 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Hero Section */}
       {step === 'household' && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#39C6C0] via-[#2eb8b2] to-[#227773]">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#319795] via-[#2C7A7B] to-[#285E61]">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50" />
           <div className="relative max-w-3xl mx-auto px-6 py-16 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">
@@ -112,10 +112,10 @@ export default function Home() {
                     disabled={!isClickable || i >= currentStepIndex}
                     className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-[#39C6C0] text-white shadow-sm'
+                        ? 'bg-[#319795] text-white shadow-sm'
                         : isCompleted
-                        ? 'bg-[#E8F8F7] text-[#227773] hover:bg-[#d5f2f0] cursor-pointer'
-                        : 'bg-gray-100 text-gray-400'
+                        ? 'bg-[#E6FFFA] text-[#285E61] hover:bg-[#B2F5EA] cursor-pointer'
+                        : 'bg-[#F2F4F7] text-[#9CA3AF]'
                     }`}
                   >
                     <span
@@ -123,8 +123,8 @@ export default function Home() {
                         isActive
                           ? 'bg-white/20 text-white'
                           : isCompleted
-                          ? 'bg-[#39C6C0] text-white'
-                          : 'bg-gray-200 text-gray-400'
+                          ? 'bg-[#319795] text-white'
+                          : 'bg-[#E2E8F0] text-[#9CA3AF]'
                       }`}
                     >
                       {isCompleted ? (
@@ -144,7 +144,7 @@ export default function Home() {
                   {i < STEPS.length - 1 && (
                     <div
                       className={`w-8 sm:w-12 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors ${
-                        currentStepIndex > i ? 'bg-[#39C6C0]' : 'bg-gray-200'
+                        currentStepIndex > i ? 'bg-[#319795]' : 'bg-[#E2E8F0]'
                       }`}
                     />
                   )}
@@ -237,20 +237,20 @@ export default function Home() {
         {step === 'results' && result && (
           <div className="animate-fadeIn">
             {/* Scenario Summary */}
-            <div className="mb-8 p-5 bg-[#F7FDFC] rounded-xl border border-[#39C6C0]/20">
+            <div className="mb-8 p-5 bg-[#E6FFFA] rounded-xl border border-[#319795]/20">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-900">Your Scenario</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setStep('household')}
-                    className="text-sm text-[#227773] hover:text-[#39C6C0] font-medium"
+                    className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
                   >
                     Edit Household
                   </button>
                   <span className="text-gray-300">|</span>
                   <button
                     onClick={() => setStep('event')}
-                    className="text-sm text-[#227773] hover:text-[#39C6C0] font-medium"
+                    className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
                   >
                     Change Event
                   </button>
@@ -293,7 +293,7 @@ export default function Home() {
             href="https://policyengine.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#39C6C0] hover:text-[#227773] font-medium transition-colors"
+            className="text-[#319795] hover:text-[#285E61] font-medium transition-colors"
           >
             PolicyEngine
           </a>

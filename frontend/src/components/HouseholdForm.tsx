@@ -39,6 +39,22 @@ export default function HouseholdForm({
     updateField('childAges', newAges);
   };
 
+  // Handle number input that allows empty string during typing
+  const handleNumberChange = (
+    field: 'income' | 'spouseIncome' | 'age' | 'spouseAge',
+    value: string,
+    min: number,
+    max?: number
+  ) => {
+    const parsed = parseInt(value);
+    if (value === '' || isNaN(parsed)) {
+      updateField(field, min);
+    } else {
+      const clamped = max !== undefined ? Math.min(max, Math.max(min, parsed)) : Math.max(min, parsed);
+      updateField(field, clamped);
+    }
+  };
+
   return (
     <div className="card p-6 sm:p-8">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -103,12 +119,12 @@ export default function HouseholdForm({
               min="18"
               max="100"
               value={household.age}
-              onChange={(e) =>
-                updateField(
-                  'age',
-                  Math.min(100, Math.max(18, parseInt(e.target.value) || 18))
-                )
-              }
+              onChange={(e) => handleNumberChange('age', e.target.value, 18, 100)}
+              onBlur={(e) => {
+                if (e.target.value === '') {
+                  updateField('age', 18);
+                }
+              }}
               disabled={disabled}
               className="input-field"
             />
@@ -119,18 +135,16 @@ export default function HouseholdForm({
               Annual Income
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
               <input
                 id="income"
                 type="number"
                 min="0"
                 step="1000"
                 value={household.income}
-                onChange={(e) =>
-                  updateField('income', Math.max(0, parseInt(e.target.value) || 0))
-                }
+                onChange={(e) => handleNumberChange('income', e.target.value, 0)}
                 disabled={disabled}
-                className="input-field pl-7"
+                className="input-field pl-8"
               />
             </div>
           </div>
@@ -170,12 +184,12 @@ export default function HouseholdForm({
                     min="18"
                     max="100"
                     value={household.spouseAge}
-                    onChange={(e) =>
-                      updateField(
-                        'spouseAge',
-                        Math.min(100, Math.max(18, parseInt(e.target.value) || 18))
-                      )
-                    }
+                    onChange={(e) => handleNumberChange('spouseAge', e.target.value, 18, 100)}
+                    onBlur={(e) => {
+                      if (e.target.value === '') {
+                        updateField('spouseAge', 18);
+                      }
+                    }}
                     disabled={disabled}
                     className="input-field"
                   />
@@ -186,18 +200,16 @@ export default function HouseholdForm({
                     Spouse&apos;s Annual Income
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
                     <input
                       id="spouseIncome"
                       type="number"
                       min="0"
                       step="1000"
                       value={household.spouseIncome}
-                      onChange={(e) =>
-                        updateField('spouseIncome', Math.max(0, parseInt(e.target.value) || 0))
-                      }
+                      onChange={(e) => handleNumberChange('spouseIncome', e.target.value, 0)}
                       disabled={disabled}
-                      className="input-field pl-7"
+                      className="input-field pl-8"
                     />
                   </div>
                 </div>
@@ -228,7 +240,7 @@ export default function HouseholdForm({
               type="button"
               onClick={addChild}
               disabled={disabled || household.childAges.length >= 10}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#227773] bg-[#E8F8F7] hover:bg-[#d5f2f0] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#2C7A7B] bg-[#E6FFFA] hover:bg-[#B2F5EA] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -242,7 +254,7 @@ export default function HouseholdForm({
           ) : (
             <div className="space-y-3">
               {household.childAges.map((age, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-lg">
                   <span className="text-sm font-medium text-gray-600 w-16">
                     Child {index + 1}
                   </span>
@@ -251,9 +263,12 @@ export default function HouseholdForm({
                     min="0"
                     max="17"
                     value={age}
-                    onChange={(e) =>
-                      updateChildAge(index, parseInt(e.target.value) || 0)
-                    }
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val)) {
+                        updateChildAge(index, val);
+                      }
+                    }}
                     disabled={disabled}
                     className="input-field flex-1 !py-2"
                     placeholder="Age"
