@@ -19,6 +19,25 @@ export default function LifeEventSelector({
   household,
   disabled = false,
 }: LifeEventSelectorProps) {
+  // Handle number input - only update if valid, allow empty during typing
+  const handleParamChange = (key: string, value: string) => {
+    const parsed = parseInt(value);
+    if (!isNaN(parsed)) {
+      onParamsChange({ ...eventParams, [key]: parsed });
+    }
+  };
+
+  // Validate and set default on blur
+  const handleParamBlur = (key: string, value: string, defaultVal: number, min = 0, max?: number) => {
+    const parsed = parseInt(value);
+    if (isNaN(parsed) || value === '') {
+      onParamsChange({ ...eventParams, [key]: defaultVal });
+    } else {
+      const clamped = max !== undefined ? Math.min(max, Math.max(min, parsed)) : Math.max(min, parsed);
+      onParamsChange({ ...eventParams, [key]: clamped });
+    }
+  };
+
   const renderEventParams = (event: LifeEvent) => {
     if (!selectedEvent || selectedEvent !== event.type) return null;
 
@@ -55,12 +74,8 @@ export default function LifeEventSelector({
                   min="18"
                   max="100"
                   value={(eventParams.spouseAge as number) || 30}
-                  onChange={(e) =>
-                    onParamsChange({
-                      ...eventParams,
-                      spouseAge: Math.min(100, Math.max(18, parseInt(e.target.value) || 30)),
-                    })
-                  }
+                  onChange={(e) => handleParamChange('spouseAge', e.target.value)}
+                  onBlur={(e) => handleParamBlur('spouseAge', e.target.value, 30, 18, 100)}
                   disabled={disabled}
                   className="input-field"
                 />
@@ -75,13 +90,8 @@ export default function LifeEventSelector({
                     min="0"
                     step="1000"
                     value={(eventParams.spouseIncome as number) || 0}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      onParamsChange({
-                        ...eventParams,
-                        spouseIncome: isNaN(val) ? 0 : Math.max(0, val),
-                      });
-                    }}
+                    onChange={(e) => handleParamChange('spouseIncome', e.target.value)}
+                    onBlur={(e) => handleParamBlur('spouseIncome', e.target.value, 0)}
                     disabled={disabled}
                     className="input-field pl-10"
                   />
@@ -96,12 +106,8 @@ export default function LifeEventSelector({
                 min="0"
                 max="10"
                 value={(eventParams.spouseChildren as number) || 0}
-                onChange={(e) =>
-                  onParamsChange({
-                    ...eventParams,
-                    spouseChildren: Math.min(10, Math.max(0, parseInt(e.target.value) || 0)),
-                  })
-                }
+                onChange={(e) => handleParamChange('spouseChildren', e.target.value)}
+                onBlur={(e) => handleParamBlur('spouseChildren', e.target.value, 0, 0, 10)}
                 disabled={disabled}
                 className="input-field"
               />
@@ -135,15 +141,8 @@ export default function LifeEventSelector({
                   min="0"
                   max={household.childAges.length}
                   value={(eventParams.childrenKeeping as number) ?? household.childAges.length}
-                  onChange={(e) =>
-                    onParamsChange({
-                      ...eventParams,
-                      childrenKeeping: Math.min(
-                        household.childAges.length,
-                        Math.max(0, parseInt(e.target.value) || 0)
-                      ),
-                    })
-                  }
+                  onChange={(e) => handleParamChange('childrenKeeping', e.target.value)}
+                  onBlur={(e) => handleParamBlur('childrenKeeping', e.target.value, household.childAges.length, 0, household.childAges.length)}
                   disabled={disabled}
                   className="input-field"
                 />
@@ -186,14 +185,9 @@ export default function LifeEventSelector({
                 type="number"
                 min="0"
                 step="1000"
-                value={(eventParams.newIncome as number) || Math.round(household.income * 1.2)}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  onParamsChange({
-                    ...eventParams,
-                    newIncome: isNaN(val) ? 0 : Math.max(0, val),
-                  });
-                }}
+                value={(eventParams.newIncome as number) ?? Math.round(household.income * 1.2)}
+                onChange={(e) => handleParamChange('newIncome', e.target.value)}
+                onBlur={(e) => handleParamBlur('newIncome', e.target.value, Math.round(household.income * 1.2))}
                 disabled={disabled}
                 className="input-field pl-10"
               />
@@ -214,20 +208,15 @@ export default function LifeEventSelector({
                 type="number"
                 min="0"
                 step="50"
-                value={(eventParams.weeklyBenefits as number) || 400}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value);
-                  onParamsChange({
-                    ...eventParams,
-                    weeklyBenefits: isNaN(val) ? 0 : Math.max(0, val),
-                  });
-                }}
+                value={(eventParams.weeklyBenefits as number) ?? 400}
+                onChange={(e) => handleParamChange('weeklyBenefits', e.target.value)}
+                onBlur={(e) => handleParamBlur('weeklyBenefits', e.target.value, 400)}
                 disabled={disabled}
                 className="input-field pl-10"
               />
             </div>
             <p className="mt-1.5 text-xs text-gray-500">
-              Annual: ${(((eventParams.weeklyBenefits as number) || 400) * 52).toLocaleString()}
+              Annual: ${(((eventParams.weeklyBenefits as number) ?? 400) * 52).toLocaleString()}
             </p>
           </div>
         );

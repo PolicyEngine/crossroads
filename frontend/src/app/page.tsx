@@ -103,17 +103,21 @@ export default function Home() {
             {STEPS.map((s, i) => {
               const isActive = s.key === step;
               const isCompleted = currentStepIndex > i;
-              const isClickable = i < currentStepIndex || (i === currentStepIndex);
+              // Allow navigation: always to step 1, to step 2 if household exists, to step 3 if results exist
+              const canNavigate =
+                s.key === 'household' ||
+                (s.key === 'event' && canProceedToEvent) ||
+                (s.key === 'results' && result !== null);
 
               return (
                 <div key={s.key} className="flex items-center">
                   <button
-                    onClick={() => isClickable && i < currentStepIndex && setStep(s.key)}
-                    disabled={!isClickable || i >= currentStepIndex}
+                    onClick={() => canNavigate && !isActive && setStep(s.key)}
+                    disabled={!canNavigate}
                     className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                       isActive
                         ? 'bg-[#319795] text-white shadow-sm'
-                        : isCompleted
+                        : canNavigate
                         ? 'bg-[#E6FFFA] text-[#285E61] hover:bg-[#B2F5EA] cursor-pointer'
                         : 'bg-[#F2F4F7] text-[#9CA3AF]'
                     }`}
@@ -124,6 +128,8 @@ export default function Home() {
                           ? 'bg-white/20 text-white'
                           : isCompleted
                           ? 'bg-[#319795] text-white'
+                          : canNavigate
+                          ? 'bg-[#81E6D9] text-[#285E61]'
                           : 'bg-[#E2E8F0] text-[#9CA3AF]'
                       }`}
                     >
