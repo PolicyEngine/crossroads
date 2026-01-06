@@ -25,6 +25,7 @@ CORS(app)  # Enable CORS for frontend requests
 VARIABLE_LABELS = {
     "household_net_income": "Net Income",
     "income_tax": "Federal Income Tax",
+    "state_income_tax": "State Income Tax",
     "employee_payroll_tax": "Payroll Tax",
     "self_employment_tax": "Self-Employment Tax",
     "snap": "SNAP Benefits",
@@ -42,6 +43,7 @@ VARIABLE_LABELS = {
 VARIABLE_CATEGORIES = {
     "household_net_income": "income",
     "income_tax": "tax",
+    "state_income_tax": "tax",
     "employee_payroll_tax": "tax",
     "self_employment_tax": "tax",
     "snap": "benefit",

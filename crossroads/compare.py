@@ -17,6 +17,7 @@ OUTPUT_VARIABLES = [
     "household_net_income",
     # Tax liability
     "income_tax",
+    "state_income_tax",
     "employee_payroll_tax",
     "self_employment_tax",
     # Major federal benefits
@@ -96,7 +97,7 @@ class ComparisonResult:
     @property
     def tax_liability_before(self) -> float:
         """Total tax liability before the event."""
-        taxes = ["income_tax", "employee_payroll_tax", "self_employment_tax"]
+        taxes = ["income_tax", "state_income_tax", "employee_payroll_tax", "self_employment_tax"]
         return sum(
             self.changes.get(t, BenefitChange("", 0, 0)).before
             for t in taxes
@@ -105,7 +106,7 @@ class ComparisonResult:
     @property
     def tax_liability_after(self) -> float:
         """Total tax liability after the event."""
-        taxes = ["income_tax", "employee_payroll_tax", "self_employment_tax"]
+        taxes = ["income_tax", "state_income_tax", "employee_payroll_tax", "self_employment_tax"]
         return sum(
             self.changes.get(t, BenefitChange("", 0, 0)).after
             for t in taxes
