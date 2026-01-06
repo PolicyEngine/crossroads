@@ -16,7 +16,6 @@ export type LifeEventType =
   | 'getting_married'
   | 'changing_income'
   | 'retiring'
-  | 'pregnancy'
   | 'divorce'
   | 'unemployment';
 
@@ -63,12 +62,6 @@ export const LIFE_EVENTS: LifeEvent[] = [
     label: 'Having a Baby',
     description: 'Add a new child to your household',
     icon: '👶',
-  },
-  {
-    type: 'pregnancy',
-    label: 'Getting Pregnant',
-    description: 'Pregnancy coverage and planning',
-    icon: '🤰',
   },
   {
     type: 'getting_married',
