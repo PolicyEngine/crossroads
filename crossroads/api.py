@@ -24,6 +24,7 @@ CORS(app)  # Enable CORS for frontend requests
 # Human-readable labels for variables
 VARIABLE_LABELS = {
     "household_net_income": "Net Income",
+    "employment_income": "Employment Income",
     "income_tax": "Federal Income Tax",
     "state_income_tax": "State Income Tax",
     "employee_payroll_tax": "Payroll Tax",
@@ -43,6 +44,7 @@ VARIABLE_LABELS = {
 # Category mapping for frontend display
 VARIABLE_CATEGORIES = {
     "household_net_income": "income",
+    "employment_income": "income",
     "income_tax": "tax",
     "state_income_tax": "tax",
     "employee_payroll_tax": "tax",

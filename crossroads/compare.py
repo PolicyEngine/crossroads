@@ -15,6 +15,8 @@ from .household import Household
 OUTPUT_VARIABLES = [
     # Net income
     "household_net_income",
+    # Gross income
+    "employment_income",
     # Tax liability
     "income_tax",
     "state_income_tax",

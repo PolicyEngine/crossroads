@@ -198,7 +198,47 @@ export default function Home() {
         )}
 
         {step === 'results' && result && (
-          <ResultsView result={result} onReset={handleReset} />
+          <div>
+            {/* Show current scenario */}
+            <div className="mb-6 p-4 bg-[#F7FDFC] rounded-lg border border-[#39C6C0]">
+              <h3 className="font-semibold text-black mb-2">Your Scenario</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
+                <div>
+                  <span className="font-medium">State:</span> {household.state}
+                </div>
+                <div>
+                  <span className="font-medium">Filing Status:</span> {household.filingStatus.replace('_', ' ')}
+                </div>
+                <div>
+                  <span className="font-medium">Your Income:</span> ${household.income.toLocaleString()}
+                </div>
+                <div>
+                  <span className="font-medium">Children:</span> {household.childAges.length}
+                </div>
+              </div>
+              <div className="mt-2 pt-2 border-t border-[#39C6C0]/30">
+                <span className="font-medium">Life Event:</span> {selectedEvent?.replace('_', ' ')}
+              </div>
+            </div>
+
+            <ResultsView result={result} onReset={handleReset} />
+
+            {/* Edit buttons */}
+            <div className="mt-6 flex gap-4 justify-center">
+              <button
+                onClick={() => setStep('household')}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+              >
+                Edit Household
+              </button>
+              <button
+                onClick={() => setStep('event')}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+              >
+                Change Life Event
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
