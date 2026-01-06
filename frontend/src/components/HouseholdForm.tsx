@@ -40,228 +40,212 @@ export default function HouseholdForm({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-black mb-6">
+    <div className="card p-6 sm:p-8">
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">
         Your Household
       </h2>
 
-      <div className="space-y-5">
-        {/* State */}
-        <div>
-          <label
-            htmlFor="state"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            State
-          </label>
-          <select
-            id="state"
-            value={household.state}
-            onChange={(e) => updateField('state', e.target.value)}
-            disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            {US_STATES.map((state) => (
-              <option key={state.code} value={state.code}>
-                {state.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="space-y-6">
+        {/* State & Filing Status Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label htmlFor="state" className="label">
+              State
+            </label>
+            <select
+              id="state"
+              value={household.state}
+              onChange={(e) => updateField('state', e.target.value)}
+              disabled={disabled}
+              className="select-field"
+            >
+              {US_STATES.map((state) => (
+                <option key={state.code} value={state.code}>
+                  {state.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Filing Status */}
-        <div>
-          <label
-            htmlFor="filingStatus"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Filing Status
-          </label>
-          <select
-            id="filingStatus"
-            value={household.filingStatus}
-            onChange={(e) =>
-              updateField(
-                'filingStatus',
-                e.target.value as Household['filingStatus']
-              )
-            }
-            disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option value="single">Single</option>
-            <option value="married_jointly">Married Filing Jointly</option>
-            <option value="married_separately">Married Filing Separately</option>
-            <option value="head_of_household">Head of Household</option>
-          </select>
-        </div>
-
-        {/* Your Age */}
-        <div>
-          <label
-            htmlFor="age"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Your Age
-          </label>
-          <input
-            id="age"
-            type="number"
-            min="18"
-            max="100"
-            value={household.age}
-            onChange={(e) =>
-              updateField(
-                'age',
-                Math.min(100, Math.max(18, parseInt(e.target.value) || 18))
-              )
-            }
-            disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-          />
-        </div>
-
-        {/* Your Annual Income */}
-        <div>
-          <label
-            htmlFor="income"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Your Annual Income
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2 text-gray-500">$</span>
-            <input
-              id="income"
-              type="number"
-              min="0"
-              step="1000"
-              value={household.income}
+          <div>
+            <label htmlFor="filingStatus" className="label">
+              Filing Status
+            </label>
+            <select
+              id="filingStatus"
+              value={household.filingStatus}
               onChange={(e) =>
-                updateField('income', Math.max(0, parseInt(e.target.value) || 0))
+                updateField(
+                  'filingStatus',
+                  e.target.value as Household['filingStatus']
+                )
               }
               disabled={disabled}
-              className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-            />
+              className="select-field"
+            >
+              <option value="single">Single</option>
+              <option value="married_jointly">Married Filing Jointly</option>
+              <option value="married_separately">Married Filing Separately</option>
+              <option value="head_of_household">Head of Household</option>
+            </select>
           </div>
         </div>
 
-        {/* Your ESI */}
-        <div className="flex items-center gap-3">
+        {/* Age & Income Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label htmlFor="age" className="label">
+              Your Age
+            </label>
+            <input
+              id="age"
+              type="number"
+              min="18"
+              max="100"
+              value={household.age}
+              onChange={(e) =>
+                updateField(
+                  'age',
+                  Math.min(100, Math.max(18, parseInt(e.target.value) || 18))
+                )
+              }
+              disabled={disabled}
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="income" className="label">
+              Annual Income
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+              <input
+                id="income"
+                type="number"
+                min="0"
+                step="1000"
+                value={household.income}
+                onChange={(e) =>
+                  updateField('income', Math.max(0, parseInt(e.target.value) || 0))
+                }
+                disabled={disabled}
+                className="input-field pl-7"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ESI Checkbox */}
+        <label className="flex items-center gap-3 cursor-pointer group">
           <input
             id="hasESI"
             type="checkbox"
             checked={household.hasESI}
             onChange={(e) => updateField('hasESI', e.target.checked)}
             disabled={disabled}
-            className="h-4 w-4 text-[#39C6C0] border-gray-300 rounded focus:ring-[#39C6C0] disabled:cursor-not-allowed accent-[#39C6C0]"
+            className="checkbox"
           />
-          <label
-            htmlFor="hasESI"
-            className="text-sm font-medium text-gray-700"
-          >
+          <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
             I have employer-sponsored health insurance
-          </label>
-        </div>
+          </span>
+        </label>
 
-        {/* Spouse Section - shown when married */}
+        {/* Spouse Section */}
         {isMarried && (
-          <div className="border-t border-gray-200 pt-5 mt-5">
-            <h3 className="text-md font-semibold text-black mb-4">Spouse Information</h3>
+          <div className="section-divider">
+            <h3 className="text-base font-semibold text-gray-900 mb-5">
+              Spouse Information
+            </h3>
 
-            {/* Spouse Age */}
-            <div className="mb-4">
-              <label
-                htmlFor="spouseAge"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Spouse&apos;s Age
-              </label>
-              <input
-                id="spouseAge"
-                type="number"
-                min="18"
-                max="100"
-                value={household.spouseAge}
-                onChange={(e) =>
-                  updateField(
-                    'spouseAge',
-                    Math.min(100, Math.max(18, parseInt(e.target.value) || 18))
-                  )
-                }
-                disabled={disabled}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
-            </div>
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label htmlFor="spouseAge" className="label">
+                    Spouse&apos;s Age
+                  </label>
+                  <input
+                    id="spouseAge"
+                    type="number"
+                    min="18"
+                    max="100"
+                    value={household.spouseAge}
+                    onChange={(e) =>
+                      updateField(
+                        'spouseAge',
+                        Math.min(100, Math.max(18, parseInt(e.target.value) || 18))
+                      )
+                    }
+                    disabled={disabled}
+                    className="input-field"
+                  />
+                </div>
 
-            {/* Spouse Income */}
-            <div className="mb-4">
-              <label
-                htmlFor="spouseIncome"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Spouse&apos;s Annual Income
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-500">$</span>
-                <input
-                  id="spouseIncome"
-                  type="number"
-                  min="0"
-                  step="1000"
-                  value={household.spouseIncome}
-                  onChange={(e) =>
-                    updateField('spouseIncome', Math.max(0, parseInt(e.target.value) || 0))
-                  }
-                  disabled={disabled}
-                  className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-                />
+                <div>
+                  <label htmlFor="spouseIncome" className="label">
+                    Spouse&apos;s Annual Income
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">$</span>
+                    <input
+                      id="spouseIncome"
+                      type="number"
+                      min="0"
+                      step="1000"
+                      value={household.spouseIncome}
+                      onChange={(e) =>
+                        updateField('spouseIncome', Math.max(0, parseInt(e.target.value) || 0))
+                      }
+                      disabled={disabled}
+                      className="input-field pl-7"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Spouse ESI */}
-            <div className="flex items-center gap-3">
-              <input
-                id="spouseHasESI"
-                type="checkbox"
-                checked={household.spouseHasESI}
-                onChange={(e) => updateField('spouseHasESI', e.target.checked)}
-                disabled={disabled}
-                className="h-4 w-4 text-[#39C6C0] border-gray-300 rounded focus:ring-[#39C6C0] disabled:cursor-not-allowed accent-[#39C6C0]"
-              />
-              <label
-                htmlFor="spouseHasESI"
-                className="text-sm font-medium text-gray-700"
-              >
-                Spouse has employer-sponsored health insurance
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  id="spouseHasESI"
+                  type="checkbox"
+                  checked={household.spouseHasESI}
+                  onChange={(e) => updateField('spouseHasESI', e.target.checked)}
+                  disabled={disabled}
+                  className="checkbox"
+                />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+                  Spouse has employer-sponsored health insurance
+                </span>
               </label>
             </div>
           </div>
         )}
 
         {/* Children Section */}
-        <div className="border-t border-gray-200 pt-5 mt-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-md font-semibold text-black">Children</h3>
+        <div className="section-divider">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-base font-semibold text-gray-900">Children</h3>
             <button
               type="button"
               onClick={addChild}
               disabled={disabled || household.childAges.length >= 10}
-              className="px-3 py-1 text-sm bg-[#39C6C0] hover:bg-[#227773] disabled:bg-gray-300 text-white rounded-md transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#227773] bg-[#E8F8F7] hover:bg-[#d5f2f0] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
-              + Add Child
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Child
             </button>
           </div>
 
           {household.childAges.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">No children added</p>
+            <p className="text-sm text-gray-500 py-3">No children added</p>
           ) : (
             <div className="space-y-3">
               {household.childAges.map((age, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <label className="text-sm text-gray-600 w-20">
+                <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-600 w-16">
                     Child {index + 1}
-                  </label>
+                  </span>
                   <input
                     type="number"
                     min="0"
@@ -271,18 +255,18 @@ export default function HouseholdForm({
                       updateChildAge(index, parseInt(e.target.value) || 0)
                     }
                     disabled={disabled}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#39C6C0] focus:border-[#39C6C0] disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+                    className="input-field flex-1 !py-2"
                     placeholder="Age"
                   />
-                  <span className="text-sm text-gray-500">years old</span>
+                  <span className="text-sm text-gray-500">years</span>
                   <button
                     type="button"
                     onClick={() => removeChild(index)}
                     disabled={disabled}
-                    className="p-1 text-red-500 hover:text-red-700 disabled:text-gray-400"
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50 rounded-md transition-colors"
                     aria-label={`Remove child ${index + 1}`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>

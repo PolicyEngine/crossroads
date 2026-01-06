@@ -20,6 +20,12 @@ const DEFAULT_HOUSEHOLD: Household = {
   spouseHasESI: false,
 };
 
+const STEPS = [
+  { key: 'household' as const, label: 'Household', number: 1 },
+  { key: 'event' as const, label: 'Life Event', number: 2 },
+  { key: 'results' as const, label: 'Results', number: 3 },
+];
+
 export default function Home() {
   const [step, setStep] = useState<Step>('household');
   const [household, setHousehold] = useState<Household>(DEFAULT_HOUSEHOLD);
@@ -70,16 +76,19 @@ export default function Home() {
   const canProceedToEvent = household.income >= 0;
   const canSimulate = selectedEvent !== null;
 
+  const currentStepIndex = STEPS.findIndex(s => s.key === step);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Hero Section */}
       {step === 'household' && (
-        <div className="bg-gradient-to-br from-[#39C6C0] to-[#227773] text-white py-12 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl font-bold mb-4">
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#39C6C0] via-[#2eb8b2] to-[#227773]">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50" />
+          <div className="relative max-w-3xl mx-auto px-6 py-16 text-center">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">
               How will life changes affect your finances?
             </h1>
-            <p className="text-xl text-[#F7FDFC] max-w-2xl mx-auto">
+            <p className="text-lg text-white/90 max-w-xl mx-auto leading-relaxed">
               Explore how major life events impact your taxes, benefits, and net income
               using PolicyEngine&apos;s simulation engine.
             </p>
@@ -88,63 +97,101 @@ export default function Home() {
       )}
 
       {/* Progress Steps */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-center gap-4 mb-8">
-          {[
-            { key: 'household', label: '1. Your Household' },
-            { key: 'event', label: '2. Life Event' },
-            { key: 'results', label: '3. Results' },
-          ].map((s, i) => (
-            <div key={s.key} className="flex items-center">
-              <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  step === s.key
-                    ? 'bg-[#39C6C0] text-white'
-                    : s.key === 'household' ||
-                      (s.key === 'event' && step !== 'household') ||
-                      (s.key === 'results' && step === 'results')
-                    ? 'bg-[#F7FDFC] text-[#227773]'
-                    : 'bg-gray-200 text-gray-500'
-                }`}
-              >
-                {s.label}
-              </div>
-              {i < 2 && (
-                <div className="w-8 h-0.5 bg-gray-300 mx-2" />
-              )}
-            </div>
-          ))}
-        </div>
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-center">
+            {STEPS.map((s, i) => {
+              const isActive = s.key === step;
+              const isCompleted = currentStepIndex > i;
+              const isClickable = i < currentStepIndex || (i === currentStepIndex);
 
+              return (
+                <div key={s.key} className="flex items-center">
+                  <button
+                    onClick={() => isClickable && i < currentStepIndex && setStep(s.key)}
+                    disabled={!isClickable || i >= currentStepIndex}
+                    className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-[#39C6C0] text-white shadow-sm'
+                        : isCompleted
+                        ? 'bg-[#E8F8F7] text-[#227773] hover:bg-[#d5f2f0] cursor-pointer'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}
+                  >
+                    <span
+                      className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : isCompleted
+                          ? 'bg-[#39C6C0] text-white'
+                          : 'bg-gray-200 text-gray-400'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      ) : (
+                        s.number
+                      )}
+                    </span>
+                    <span className="hidden sm:inline">{s.label}</span>
+                  </button>
+                  {i < STEPS.length - 1 && (
+                    <div
+                      className={`w-8 sm:w-12 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors ${
+                        currentStepIndex > i ? 'bg-[#39C6C0]' : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Error Display */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {error}
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
         {/* Step Content */}
         {step === 'household' && (
-          <div className="max-w-xl mx-auto">
+          <div className="animate-fadeIn">
             <HouseholdForm
               household={household}
               onChange={setHousehold}
               disabled={isLoading}
             />
-            <div className="mt-6 flex justify-end">
+            <div className="mt-8 flex justify-end">
               <button
                 onClick={() => setStep('event')}
                 disabled={!canProceedToEvent}
-                className="px-6 py-3 bg-[#39C6C0] hover:bg-[#227773] disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
+                className="btn btn-primary px-8"
               >
-                Continue to Life Events
+                Continue
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
           </div>
         )}
 
         {step === 'event' && (
-          <div className="max-w-xl mx-auto">
+          <div className="animate-fadeIn">
             <LifeEventSelector
               selectedEvent={selectedEvent}
               onSelect={setSelectedEvent}
@@ -153,44 +200,34 @@ export default function Home() {
               household={household}
               disabled={isLoading}
             />
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <button
                 onClick={() => setStep('household')}
                 disabled={isLoading}
-                className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                className="btn btn-secondary"
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
                 Back
               </button>
               <button
                 onClick={handleSimulate}
                 disabled={!canSimulate || isLoading}
-                className="px-6 py-3 bg-[#39C6C0] hover:bg-[#227773] disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                className="btn btn-primary px-8"
               >
                 {isLoading ? (
                   <>
-                    <svg
-                      className="animate-spin h-5 w-5"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                    <span className="spinner" />
                     Simulating...
                   </>
                 ) : (
-                  'See Results'
+                  <>
+                    See Results
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </>
                 )}
               </button>
             </div>
@@ -198,59 +235,65 @@ export default function Home() {
         )}
 
         {step === 'results' && result && (
-          <div>
-            {/* Show current scenario */}
-            <div className="mb-6 p-4 bg-[#F7FDFC] rounded-lg border border-[#39C6C0]">
-              <h3 className="font-semibold text-black mb-2">Your Scenario</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-                <div>
-                  <span className="font-medium">State:</span> {household.state}
-                </div>
-                <div>
-                  <span className="font-medium">Filing Status:</span> {household.filingStatus.replace('_', ' ')}
-                </div>
-                <div>
-                  <span className="font-medium">Your Income:</span> ${household.income.toLocaleString()}
-                </div>
-                <div>
-                  <span className="font-medium">Children:</span> {household.childAges.length}
+          <div className="animate-fadeIn">
+            {/* Scenario Summary */}
+            <div className="mb-8 p-5 bg-[#F7FDFC] rounded-xl border border-[#39C6C0]/20">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-gray-900">Your Scenario</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStep('household')}
+                    className="text-sm text-[#227773] hover:text-[#39C6C0] font-medium"
+                  >
+                    Edit Household
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    onClick={() => setStep('event')}
+                    className="text-sm text-[#227773] hover:text-[#39C6C0] font-medium"
+                  >
+                    Change Event
+                  </button>
                 </div>
               </div>
-              <div className="mt-2 pt-2 border-t border-[#39C6C0]/30">
-                <span className="font-medium">Life Event:</span> {selectedEvent?.replace('_', ' ')}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">State</span>
+                  <p className="font-medium text-gray-900">{household.state}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Filing Status</span>
+                  <p className="font-medium text-gray-900 capitalize">
+                    {household.filingStatus.replace(/_/g, ' ')}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Income</span>
+                  <p className="font-medium text-gray-900">${household.income.toLocaleString()}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Life Event</span>
+                  <p className="font-medium text-gray-900 capitalize">
+                    {selectedEvent?.replace(/_/g, ' ')}
+                  </p>
+                </div>
               </div>
             </div>
 
             <ResultsView result={result} onReset={handleReset} />
-
-            {/* Edit buttons */}
-            <div className="mt-6 flex gap-4 justify-center">
-              <button
-                onClick={() => setStep('household')}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-              >
-                Edit Household
-              </button>
-              <button
-                onClick={() => setStep('event')}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-              >
-                Change Life Event
-              </button>
-            </div>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <footer className="mt-auto py-8 text-center text-gray-500 text-sm">
-        <p>
+      <footer className="mt-auto py-10 text-center">
+        <p className="text-sm text-gray-500">
           Powered by{' '}
           <a
             href="https://policyengine.org"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#39C6C0] hover:underline"
+            className="text-[#39C6C0] hover:text-[#227773] font-medium transition-colors"
           >
             PolicyEngine
           </a>

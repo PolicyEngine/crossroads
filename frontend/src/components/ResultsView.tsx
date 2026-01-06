@@ -37,41 +37,41 @@ interface SummaryCardProps {
   before: number;
   after: number;
   inverse?: boolean;
-  note?: string;
+  icon: React.ReactNode;
 }
 
-function SummaryCard({ title, before, after, inverse = false, note }: SummaryCardProps) {
+function SummaryCard({ title, before, after, inverse = false, icon }: SummaryCardProps) {
   const diff = after - before;
   const isPositive = inverse ? diff < 0 : diff > 0;
   const isNegative = inverse ? diff > 0 : diff < 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-5">
-      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-        {title}
-      </h3>
-      <div className="mt-2 flex items-baseline gap-3">
+    <div className="card p-5">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+          {icon}
+        </div>
+        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+      </div>
+      <div className="flex items-baseline gap-3">
         <span className="text-2xl font-bold text-gray-900">
           {formatCurrency(after)}
         </span>
         <span
-          className={`text-sm font-medium ${
+          className={`text-sm font-semibold px-2 py-0.5 rounded-full ${
             isPositive
-              ? 'text-green-600'
+              ? 'bg-green-50 text-green-600'
               : isNegative
-              ? 'text-red-600'
-              : 'text-gray-500'
+              ? 'bg-red-50 text-red-600'
+              : 'bg-gray-50 text-gray-500'
           }`}
         >
           {formatChange(diff)}
         </span>
       </div>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1.5 text-sm text-gray-400">
         was {formatCurrency(before)}
       </p>
-      {note && (
-        <p className="mt-1 text-xs text-gray-400">{note}</p>
-      )}
     </div>
   );
 }
@@ -81,7 +81,6 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
     .filter((m) => m.before !== 0 || m.after !== 0)
     .map((m) => ({
       name: m.label,
-      // Negate taxes so they appear on negative side of chart
       Before: m.category === 'tax' ? -m.before : m.before,
       After: m.category === 'tax' ? -m.after : m.after,
       category: m.category,
@@ -89,9 +88,9 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">
-          Before vs After Comparison
+      <div className="card p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-4">
+          Before vs After
         </h3>
         <p className="text-gray-500 text-center py-8">No data to display</p>
       </div>
@@ -99,29 +98,46 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-black mb-4">
-        Before vs After Comparison
+    <div className="card p-6">
+      <h3 className="text-base font-semibold text-gray-900 mb-4">
+        Before vs After
       </h3>
-      <div className="h-80">
+      <div className="h-72">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+            margin={{ top: 5, right: 20, left: 90, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis
               type="number"
               tickFormatter={(value) => `${value < 0 ? '-' : ''}$${Math.abs(value / 1000).toFixed(0)}k`}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+              axisLine={{ stroke: '#e5e7eb' }}
             />
-            <YAxis type="category" dataKey="name" width={95} fontSize={12} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={85}
+              tick={{ fontSize: 12, fill: '#374151' }}
+              axisLine={{ stroke: '#e5e7eb' }}
+            />
             <Tooltip
               formatter={(value) => formatCurrency(Math.abs(value as number))}
-              labelStyle={{ color: '#374151' }}
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+              }}
+              labelStyle={{ color: '#374151', fontWeight: 500 }}
             />
-            <Legend />
-            <Bar dataKey="Before" fill="#808080" radius={[0, 4, 4, 0]} />
+            <Legend
+              wrapperStyle={{ paddingTop: '16px' }}
+              formatter={(value) => <span className="text-sm text-gray-600">{value}</span>}
+            />
+            <Bar dataKey="Before" fill="#9ca3af" radius={[0, 4, 4, 0]} />
             <Bar dataKey="After" fill="#39C6C0" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -150,8 +166,8 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">
+      <div className="card p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-4">
           What Changed
         </h3>
         <p className="text-gray-500 text-center py-8">No changes detected</p>
@@ -160,29 +176,43 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-black mb-4">
+    <div className="card p-6">
+      <h3 className="text-base font-semibold text-gray-900 mb-4">
         What Changed
       </h3>
-      <div className="h-64">
+      <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+            margin={{ top: 5, right: 20, left: 90, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis
               type="number"
               tickFormatter={(value) => {
                 const prefix = value >= 0 ? '+' : '';
                 return `${prefix}$${(value / 1000).toFixed(0)}k`;
               }}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+              axisLine={{ stroke: '#e5e7eb' }}
             />
-            <YAxis type="category" dataKey="name" width={95} fontSize={12} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={85}
+              tick={{ fontSize: 12, fill: '#374151' }}
+              axisLine={{ stroke: '#e5e7eb' }}
+            />
             <Tooltip
               formatter={(value) => formatChange(value as number)}
-              labelStyle={{ color: '#374151' }}
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+              }}
+              labelStyle={{ color: '#374151', fontWeight: 500 }}
             />
             <Bar dataKey="change" radius={[0, 4, 4, 0]}>
               {chartData.map((entry, index) => (
@@ -197,7 +227,6 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 }
 
 function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; showAll: boolean }) {
-  // Filter by priority if not showing all
   const filteredMetrics = showAll
     ? metrics
     : metrics.filter(m => m.priority === 1 || (m.before !== 0 || m.after !== 0));
@@ -214,23 +243,22 @@ function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; sho
     }
   });
 
-  // Filter out empty categories
   const nonEmptyCategories = Object.entries(categories).filter(
     ([, category]) => category.items.length > 0
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-black mb-4">
+    <div className="card p-6">
+      <h3 className="text-base font-semibold text-gray-900 mb-5">
         Detailed Breakdown
       </h3>
       <div className="space-y-6">
         {nonEmptyCategories.map(([key, category]) => (
           <div key={key}>
-            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
               {category.label}
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {category.items.map((item) => {
                 const diff = item.after - item.before;
                 const isTax = item.category === 'tax';
@@ -240,24 +268,27 @@ function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; sho
                 return (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                    className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <span className="text-gray-700">{item.label}</span>
-                    <div className="flex items-center gap-4">
-                      <span className="text-gray-500 text-sm">
-                        {formatCurrency(item.before)} →{' '}
-                        <span className="text-gray-900 font-medium">
-                          {formatCurrency(item.after)}
-                        </span>
+                    <span className="text-sm text-gray-700">{item.label}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-400">
+                        {formatCurrency(item.before)}
+                      </span>
+                      <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatCurrency(item.after)}
                       </span>
                       {diff !== 0 && (
                         <span
-                          className={`text-sm font-medium px-2 py-0.5 rounded ${
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                             isPositive
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-green-50 text-green-600'
                               : isNegative
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-700'
+                              ? 'bg-red-50 text-red-600'
+                              : 'bg-gray-50 text-gray-500'
                           }`}
                         >
                           {formatChange(diff)}
@@ -278,12 +309,10 @@ function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; sho
 export default function ResultsView({ result, onReset }: ResultsViewProps) {
   const [showAllBenefits, setShowAllBenefits] = useState(false);
 
-  // Get metrics with changes or non-zero values for primary view
   const primaryMetrics = result.before.metrics.filter(
     m => m.priority === 1 || m.before !== 0 || m.after !== 0
   );
 
-  // Count secondary benefits that have values
   const secondaryWithValues = result.before.metrics.filter(
     m => m.priority === 2 && (m.before !== 0 || m.after !== 0)
   );
@@ -291,45 +320,59 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SummaryCard
           title="Net Income"
           before={result.before.netIncome}
           after={result.after.netIncome}
-          note="Includes all taxes, benefits, and costs"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
         />
         <SummaryCard
           title="Total Taxes"
           before={result.before.totalTax}
           after={result.after.totalTax}
           inverse
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+            </svg>
+          }
         />
         <SummaryCard
-          title="Total Benefits & Credits"
+          title="Benefits & Credits"
           before={result.before.totalBenefits}
           after={result.after.totalBenefits}
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+            </svg>
+          }
         />
       </div>
 
       {/* View Toggle */}
       <div className="flex justify-center">
-        <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-white">
+        <div className="inline-flex rounded-xl border border-gray-200 p-1 bg-white">
           <button
             onClick={() => setShowAllBenefits(false)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               !showAllBenefits
-                ? 'bg-[#39C6C0] text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-[#39C6C0] text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
             Key Changes
           </button>
           <button
             onClick={() => setShowAllBenefits(true)}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               showAllBenefits
-                ? 'bg-[#39C6C0] text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-[#39C6C0] text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
             }`}
           >
             All Benefits ({result.before.metrics.length})
@@ -337,21 +380,21 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
         </div>
       </div>
 
-      {/* Info about secondary benefits */}
+      {/* Secondary benefits hint */}
       {!showAllBenefits && secondaryWithValues.length > 0 && (
-        <div className="text-center text-sm text-gray-500">
-          {secondaryWithValues.length} additional benefit{secondaryWithValues.length !== 1 ? 's' : ''} with values not shown.{' '}
+        <p className="text-center text-sm text-gray-500">
+          {secondaryWithValues.length} additional benefit{secondaryWithValues.length !== 1 ? 's' : ''} not shown.{' '}
           <button
             onClick={() => setShowAllBenefits(true)}
-            className="text-[#39C6C0] hover:underline"
+            className="text-[#39C6C0] hover:text-[#227773] font-medium transition-colors"
           >
             Show all
           </button>
-        </div>
+        </p>
       )}
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <ComparisonChart metrics={showAllBenefits ? result.before.metrics : primaryMetrics} />
         <ChangeBreakdown metrics={showAllBenefits ? result.before.metrics : primaryMetrics} />
       </div>
@@ -361,10 +404,10 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
 
       {/* Reset Button */}
       <div className="flex justify-center pt-4">
-        <button
-          onClick={onReset}
-          className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
-        >
+        <button onClick={onReset} className="btn btn-secondary">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
           Try Another Scenario
         </button>
       </div>
