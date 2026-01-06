@@ -32,6 +32,7 @@ OUTPUT_VARIABLES = [
     # Healthcare
     "premium_tax_credit",
     "medicaid",
+    "chip",
 ]
 
 

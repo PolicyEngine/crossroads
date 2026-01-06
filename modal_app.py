@@ -59,6 +59,7 @@ def simulate(data: dict) -> dict:
         "refundable_ctc": "Refundable CTC",
         "premium_tax_credit": "Premium Tax Credit (ACA)",
         "medicaid": "Medicaid",
+        "chip": "CHIP",
     }
 
     # Category mapping for frontend display
@@ -77,6 +78,7 @@ def simulate(data: dict) -> dict:
         "refundable_ctc": "credit",
         "premium_tax_credit": "credit",
         "medicaid": "benefit",
+        "chip": "benefit",
     }
 
     def create_household_from_request(data: dict) -> Household:

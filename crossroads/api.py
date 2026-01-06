@@ -37,6 +37,7 @@ VARIABLE_LABELS = {
     "refundable_ctc": "Refundable CTC",
     "premium_tax_credit": "Premium Tax Credit (ACA)",
     "medicaid": "Medicaid",
+    "chip": "CHIP",
 }
 
 # Category mapping for frontend display
@@ -55,6 +56,7 @@ VARIABLE_CATEGORIES = {
     "refundable_ctc": "credit",
     "premium_tax_credit": "credit",
     "medicaid": "benefit",
+    "chip": "benefit",
 }
 
 
