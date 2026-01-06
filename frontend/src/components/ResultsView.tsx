@@ -76,8 +76,9 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
     .filter((m) => m.before !== 0 || m.after !== 0)
     .map((m) => ({
       name: m.label,
-      Before: m.before,
-      After: m.after,
+      // Negate taxes so they appear on negative side of chart
+      Before: m.category === 'tax' ? -m.before : m.before,
+      After: m.category === 'tax' ? -m.after : m.after,
       category: m.category,
     }));
 
@@ -96,11 +97,11 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               type="number"
-              tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value) => `${value < 0 ? '-' : ''}$${Math.abs(value / 1000).toFixed(0)}k`}
             />
             <YAxis type="category" dataKey="name" width={95} fontSize={12} />
             <Tooltip
-              formatter={(value) => formatCurrency(value as number)}
+              formatter={(value) => formatCurrency(Math.abs(value as number))}
               labelStyle={{ color: '#374151' }}
             />
             <Legend />
