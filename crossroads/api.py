@@ -8,6 +8,7 @@ from .events import (
     ChildAgingOut,
     Divorce,
     JobChange,
+    LosingESI,
     Marriage,
     MedicareTransition,
     Move,
@@ -195,6 +196,7 @@ def create_event_from_request(event_type: str, params: dict, household: Househol
         ),
         "medicare_transition": lambda: MedicareTransition(),
         "child_aging_out": lambda: ChildAgingOut(),
+        "losing_esi": lambda: LosingESI(),
     }
 
     if event_type not in event_map:

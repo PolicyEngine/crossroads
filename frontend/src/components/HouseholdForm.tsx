@@ -170,7 +170,7 @@ export default function HouseholdForm({
             className="checkbox"
           />
           <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
-            I have employer-sponsored health insurance
+            I currently have employer-sponsored health insurance
           </span>
         </label>
 
@@ -231,7 +231,7 @@ export default function HouseholdForm({
                   className="checkbox"
                 />
                 <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
-                  Spouse has employer-sponsored health insurance
+                  Spouse currently has employer-sponsored health insurance
                 </span>
               </label>
             </div>

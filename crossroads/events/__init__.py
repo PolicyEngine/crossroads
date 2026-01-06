@@ -4,6 +4,7 @@ from .base import LifeEvent
 from .child_aging_out import AgingOutType, ChildAgingOut
 from .divorce import Divorce
 from .job_change import JobChange
+from .losing_esi import ESILossType, LosingESI
 from .marriage import Marriage
 from .medicare_transition import MedicareTransition
 from .move import Move
@@ -16,8 +17,10 @@ __all__ = [
     "AgingOutType",
     "ChildAgingOut",
     "Divorce",
+    "ESILossType",
     "JobChange",
     "LifeEvent",
+    "LosingESI",
     "Marriage",
     "MedicareTransition",
     "Move",

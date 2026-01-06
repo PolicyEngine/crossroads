@@ -59,11 +59,14 @@ function generateMockMetrics(
     case 'changing_income':
       afterIncome = totalIncome * 1.2;
       break;
-    case 'retiring':
-      afterIncome = totalIncome * 0.4;
-      afterAge = 65;
+    case 'divorce':
+      afterFilingStatus = 'single';
+      afterIncome = income; // Just the primary income
       break;
     case 'moving_states':
+      break;
+    case 'losing_esi':
+      // May become eligible for ACA subsidies
       break;
   }
 
@@ -126,7 +129,7 @@ function generateMockResult(
   let afterGrossIncome = totalIncome;
   if (lifeEvent.type === 'getting_married') afterGrossIncome *= 1.5;
   if (lifeEvent.type === 'changing_income') afterGrossIncome *= 1.2;
-  if (lifeEvent.type === 'retiring') afterGrossIncome *= 0.4;
+  if (lifeEvent.type === 'divorce') afterGrossIncome = household.income;
 
   const afterNetIncome = afterGrossIncome - afterTax + afterBenefits;
 

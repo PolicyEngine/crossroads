@@ -15,9 +15,8 @@ export type LifeEventType =
   | 'moving_states'
   | 'getting_married'
   | 'changing_income'
-  | 'retiring'
   | 'divorce'
-  | 'unemployment';
+  | 'losing_esi';
 
 export interface LifeEvent {
   type: LifeEventType;
@@ -88,16 +87,10 @@ export const LIFE_EVENTS: LifeEvent[] = [
     icon: '💰',
   },
   {
-    type: 'unemployment',
-    label: 'Losing Your Job',
-    description: 'Transition to unemployment benefits',
-    icon: '📉',
-  },
-  {
-    type: 'retiring',
-    label: 'Retiring',
-    description: 'Transition to retirement',
-    icon: '🎉',
+    type: 'losing_esi',
+    label: 'Losing Health Insurance',
+    description: 'Lose employer-sponsored health insurance',
+    icon: '🏥',
   },
 ];
 

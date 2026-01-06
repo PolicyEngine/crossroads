@@ -198,28 +198,9 @@ export default function LifeEventSelector({
           </div>
         );
 
-      case 'unemployment':
-        return (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <label className="label">Expected Weekly Unemployment Benefits</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
-              <input
-                type="number"
-                min="0"
-                step="50"
-                value={(eventParams.weeklyBenefits as number) ?? 400}
-                onChange={(e) => handleParamChange('weeklyBenefits', e.target.value)}
-                onBlur={(e) => handleParamBlur('weeklyBenefits', e.target.value, 400)}
-                disabled={disabled}
-                className="input-field pl-10"
-              />
-            </div>
-            <p className="mt-1.5 text-xs text-gray-500">
-              Annual: ${(((eventParams.weeklyBenefits as number) ?? 400) * 52).toLocaleString()}
-            </p>
-          </div>
-        );
+      case 'losing_esi':
+        // No additional params needed - just simulates losing health insurance
+        return null;
 
       default:
         return null;

@@ -33,6 +33,7 @@ def simulate(data: dict) -> dict:
         ChildAgingOut,
         Divorce,
         JobChange,
+        LosingESI,
         Marriage,
         MedicareTransition,
         Move,
@@ -214,6 +215,7 @@ def simulate(data: dict) -> dict:
             ),
             "medicare_transition": lambda: MedicareTransition(),
             "child_aging_out": lambda: ChildAgingOut(),
+            "losing_esi": lambda: LosingESI(),
         }
 
         if event_type not in event_map:

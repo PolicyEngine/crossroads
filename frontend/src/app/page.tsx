@@ -312,7 +312,11 @@ export default function Home() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-gray-500">State</span>
-                      <p className="font-medium text-gray-900">{household.state}</p>
+                      <p className="font-medium text-gray-900">
+                        {selectedEvent === 'moving_states' && eventParams.newState
+                          ? `${household.state} → ${eventParams.newState}`
+                          : household.state}
+                      </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Filing Status</span>
@@ -322,7 +326,11 @@ export default function Home() {
                     </div>
                     <div>
                       <span className="text-gray-500">Income</span>
-                      <p className="font-medium text-gray-900">${household.income.toLocaleString()}</p>
+                      <p className="font-medium text-gray-900">
+                        {selectedEvent === 'changing_income' && eventParams.newIncome
+                          ? `$${household.income.toLocaleString()} → $${(eventParams.newIncome as number).toLocaleString()}`
+                          : `$${household.income.toLocaleString()}`}
+                      </p>
                     </div>
                     <div>
                       <span className="text-gray-500">Life Event</span>
