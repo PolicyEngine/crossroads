@@ -2,23 +2,18 @@
 
 import modal
 
-# Create the Modal app
 app = modal.App("crossroads-api")
 
-# Define the container image with PolicyEngine installed
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install(
-        "policyengine-us>=1.0.0",
-        "fastapi",
-    )
+    .pip_install("policyengine-us>=1.0.0", "fastapi")
     .add_local_dir("crossroads", "/root/crossroads")
 )
 
 
 @app.function(
     image=image,
-    min_containers=1,  # Keep one container warm to avoid cold starts
+    min_containers=1,
     timeout=300,
     memory=2048,
 )
@@ -43,128 +38,12 @@ def simulate(data: dict) -> dict:
         Unemployment,
     )
     from crossroads.household import Household, Person
-
-    # Variable metadata: label, category, priority (1=primary, 2=secondary)
-    VARIABLE_METADATA = {
-        # Income
-        "household_net_income": ("Net Income", "income", 1),
-        "employment_income": ("Employment Income", "income", 1),
-        "self_employment_income": ("Self-Employment Income", "income", 2),
-        # Taxes
-        "income_tax": ("Federal Income Tax", "tax", 1),
-        "state_income_tax": ("State Income Tax", "tax", 1),
-        "employee_payroll_tax": ("Payroll Tax", "tax", 1),
-        "self_employment_tax": ("Self-Employment Tax", "tax", 2),
-        # Food assistance
-        "snap": ("SNAP (Food Stamps)", "benefit", 1),
-        "free_school_meals": ("Free School Meals", "benefit", 2),
-        "reduced_price_school_meals": ("Reduced Price Meals", "benefit", 2),
-        "school_meal_subsidy": ("School Meal Subsidy", "benefit", 2),
-        "wic": ("WIC", "benefit", 1),
-        # Cash assistance
-        "tanf": ("TANF", "benefit", 1),
-        "ssi": ("SSI", "benefit", 1),
-        "social_security": ("Social Security", "benefit", 1),
-        # Housing
-        "spm_unit_capped_housing_subsidy": ("Housing Subsidy", "benefit", 1),
-        # Healthcare
-        "medicaid": ("Medicaid", "benefit", 1),
-        "chip": ("CHIP", "benefit", 1),
-        # Energy/utilities
-        "liheap": ("LIHEAP (Energy)", "benefit", 2),
-        "lifeline": ("Lifeline (Phone)", "benefit", 2),
-        "acp": ("ACP (Broadband)", "benefit", 2),
-        # Childcare
-        "ccdf": ("Childcare Subsidy (CCDF)", "benefit", 2),
-        # Tax credits - primary
-        "earned_income_tax_credit": ("Earned Income Tax Credit", "credit", 1),
-        "ctc": ("Child Tax Credit", "credit", 1),
-        "non_refundable_ctc": ("CTC (reduces taxes)", "credit", 1),
-        "refundable_ctc": ("CTC (refundable)", "credit", 2),
-        "cdcc": ("Child & Dependent Care Credit", "credit", 1),
-        "premium_tax_credit": ("Premium Tax Credit (ACA)", "credit", 1),
-        # Tax credits - secondary
-        "savers_credit": ("Saver's Credit", "credit", 2),
-        "american_opportunity_credit": ("American Opportunity Credit", "credit", 2),
-        "lifetime_learning_credit": ("Lifetime Learning Credit", "credit", 2),
-        # State benefits & credits
-        "state_eitc": ("State EITC", "state_credit", 1),
-        "state_ctc": ("State CTC", "state_credit", 1),
-        # California
-        "ca_eitc": ("CalEITC", "state_credit", 1),
-        "ca_yctc": ("CA Young Child Tax Credit", "state_credit", 1),
-        "ca_renter_credit": ("CA Renter Credit", "state_credit", 2),
-        "ca_tanf": ("CalWORKs (CA TANF)", "state_benefit", 1),
-        "ca_state_supplement": ("CA SSI Supplement", "state_benefit", 1),
-        # New York
-        "ny_eitc": ("NY EITC", "state_credit", 1),
-        "ny_ctc": ("NY Child Tax Credit", "state_credit", 1),
-        "ny_tanf": ("NY TANF", "state_benefit", 1),
-        # Colorado
-        "co_eitc": ("CO EITC", "state_credit", 1),
-        "co_ctc": ("CO Child Tax Credit", "state_credit", 1),
-        "co_tanf": ("CO TANF", "state_benefit", 1),
-        "co_state_supplement": ("CO SSI Supplement", "state_benefit", 1),
-        "co_ccap_subsidy": ("CO Childcare Assistance", "state_benefit", 1),
-        "co_family_affordability_credit": ("CO Family Affordability Credit", "state_credit", 1),
-        # Maryland
-        "md_eitc": ("MD EITC", "state_credit", 1),
-        "md_ctc": ("MD Child Tax Credit", "state_credit", 1),
-        # New Jersey
-        "nj_eitc": ("NJ EITC", "state_credit", 1),
-        "nj_ctc": ("NJ Child Tax Credit", "state_credit", 1),
-        # Illinois
-        "il_eitc": ("IL EITC", "state_credit", 1),
-        "il_ctc": ("IL Child Tax Credit", "state_credit", 1),
-        # DC
-        "dc_eitc": ("DC EITC", "state_credit", 1),
-        "dc_ctc": ("DC Child Tax Credit", "state_credit", 1),
-        "dc_tanf": ("DC TANF", "state_benefit", 1),
-        "dc_snap_temporary_local_benefit": ("DC SNAP Supplement", "state_benefit", 1),
-        # Oregon
-        "or_eitc": ("OR EITC", "state_credit", 1),
-        "or_ctc": ("OR Child Tax Credit", "state_credit", 1),
-        # New Mexico
-        "nm_eitc": ("NM EITC", "state_credit", 1),
-        "nm_ctc": ("NM Child Tax Credit", "state_credit", 1),
-        # Massachusetts
-        "ma_eitc": ("MA EITC", "state_credit", 1),
-        "ma_child_and_family_credit": ("MA Child & Family Credit", "state_credit", 1),
-        # Washington
-        "wa_working_families_tax_credit": ("WA Working Families Credit", "state_credit", 1),
-        # Connecticut
-        "ct_child_tax_rebate": ("CT Child Tax Rebate", "state_credit", 1),
-        "ct_property_tax_credit": ("CT Property Tax Credit", "state_credit", 2),
-        # Minnesota
-        "mn_child_and_working_families_credits": ("MN Working Family Credit", "state_credit", 1),
-        # Other states
-        "vt_eitc": ("VT EITC", "state_credit", 1),
-        "vt_ctc": ("VT Child Tax Credit", "state_credit", 1),
-        "me_eitc": ("ME EITC", "state_credit", 1),
-        "ri_eitc": ("RI EITC", "state_credit", 1),
-        "oh_eitc": ("OH EITC", "state_credit", 1),
-        "ne_eitc": ("NE EITC", "state_credit", 1),
-        "sc_eitc": ("SC EITC", "state_credit", 1),
-        "ok_eitc": ("OK EITC", "state_credit", 1),
-        "hi_eitc": ("HI EITC", "state_credit", 1),
-        "ut_eitc": ("UT EITC", "state_credit", 1),
-        "ut_ctc": ("UT Child Tax Credit", "state_credit", 1),
-    }
-
-    def get_label(var_name):
-        return VARIABLE_METADATA.get(var_name, (var_name, "benefit", 2))[0]
-
-    def get_category(var_name):
-        return VARIABLE_METADATA.get(var_name, (var_name, "benefit", 2))[1]
-
-    def get_priority(var_name):
-        return VARIABLE_METADATA.get(var_name, (var_name, "benefit", 2))[2]
+    from crossroads.metadata import get_category, get_label, get_priority
 
     def create_household_from_request(data: dict) -> Household:
         """Convert frontend household format to backend Household."""
         members = []
 
-        # Create head of household
         head = Person(
             age=data.get("age", 30),
             employment_income=data.get("income", 0),
@@ -172,7 +51,6 @@ def simulate(data: dict) -> dict:
         )
         members.append(head)
 
-        # Add spouse if married (jointly or separately)
         filing_status = data.get("filingStatus", "single")
         if filing_status in ("married_jointly", "married_separately"):
             spouse = Person(
@@ -182,11 +60,8 @@ def simulate(data: dict) -> dict:
             )
             members.append(spouse)
 
-        # Add children from childAges array
-        child_ages = data.get("childAges", [])
-        for age in child_ages:
-            child = Person(age=age)
-            members.append(child)
+        for age in data.get("childAges", []):
+            members.append(Person(age=age))
 
         return Household(
             state=data.get("state", "CA"),
@@ -225,11 +100,10 @@ def simulate(data: dict) -> dict:
 
     def format_result_for_frontend(result) -> dict:
         """Convert ComparisonResult to frontend-expected format."""
-        # Build metrics list for frontend charts
         metrics = []
         for var_name, change in result.changes.items():
             if var_name == "household_net_income":
-                continue  # Skip net income from detailed metrics
+                continue
             metrics.append({
                 "name": var_name,
                 "label": get_label(var_name),
@@ -239,14 +113,11 @@ def simulate(data: dict) -> dict:
                 "priority": get_priority(var_name),
             })
 
-        # Calculate totals
         total_tax_before = sum(
-            c.before for name, c in result.changes.items()
-            if get_category(name) == "tax"
+            c.before for name, c in result.changes.items() if get_category(name) == "tax"
         )
         total_tax_after = sum(
-            c.after for name, c in result.changes.items()
-            if get_category(name) == "tax"
+            c.after for name, c in result.changes.items() if get_category(name) == "tax"
         )
         total_benefits_before = sum(
             c.before for name, c in result.changes.items()
@@ -268,9 +139,7 @@ def simulate(data: dict) -> dict:
                 "netIncome": result.net_income_after,
                 "totalTax": total_tax_after,
                 "totalBenefits": total_benefits_after,
-                "metrics": [
-                    {**m, "before": m["after"]} for m in metrics
-                ],
+                "metrics": [{**m, "before": m["after"]} for m in metrics],
             },
             "diff": {
                 "netIncome": result.net_income_change,
@@ -284,19 +153,14 @@ def simulate(data: dict) -> dict:
         }
 
     try:
-        household_data = data.get("household", {})
-        event_data = data.get("lifeEvent", {})
-
-        household = create_household_from_request(household_data)
+        household = create_household_from_request(data.get("household", {}))
         event = create_event_from_request(
-            event_data.get("type"),
-            event_data.get("params", {}),
+            data.get("lifeEvent", {}).get("type"),
+            data.get("lifeEvent", {}).get("params", {}),
             household,
         )
-
         result = compare(household, event)
         return format_result_for_frontend(result)
-
     except ValueError as e:
         return {"error": str(e)}
     except Exception as e:
