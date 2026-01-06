@@ -21,53 +21,61 @@ from .household import Household, Person
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend requests
 
-# Human-readable labels for variables
-VARIABLE_LABELS = {
-    "household_net_income": "Net Income",
-    "employment_income": "Employment Income",
-    "income_tax": "Federal Income Tax",
-    "state_income_tax": "State Income Tax",
-    "employee_payroll_tax": "Payroll Tax",
-    "self_employment_tax": "Self-Employment Tax",
-    "snap": "SNAP Benefits",
-    "tanf": "TANF",
-    "ssi": "SSI",
-    "social_security": "Social Security",
-    "earned_income_tax_credit": "Earned Income Tax Credit",
-    "child_tax_credit": "Child Tax Credit",
-    "refundable_ctc": "Refundable CTC",
-    "premium_tax_credit": "Premium Tax Credit (ACA)",
-    "medicaid": "Medicaid",
-    "chip": "CHIP",
-    "wic": "WIC",
-    "school_meal_subsidy": "School Meals",
-    "spm_unit_capped_housing_subsidy": "Housing Subsidy",
-    "cdcc": "Child Care Credit",
+# Variable metadata: label, category, priority (1=primary, 2=secondary)
+VARIABLE_METADATA = {
+    # Income
+    "household_net_income": ("Net Income", "income", 1),
+    "employment_income": ("Employment Income", "income", 1),
+    "self_employment_income": ("Self-Employment Income", "income", 2),
+    # Taxes
+    "income_tax": ("Federal Income Tax", "tax", 1),
+    "state_income_tax": ("State Income Tax", "tax", 1),
+    "employee_payroll_tax": ("Payroll Tax", "tax", 1),
+    "self_employment_tax": ("Self-Employment Tax", "tax", 2),
+    # Food assistance
+    "snap": ("SNAP (Food Stamps)", "benefit", 1),
+    "free_school_meals": ("Free School Meals", "benefit", 2),
+    "reduced_price_school_meals": ("Reduced Price Meals", "benefit", 2),
+    "school_meal_subsidy": ("School Meal Subsidy", "benefit", 2),
+    "wic": ("WIC", "benefit", 1),
+    # Cash assistance
+    "tanf": ("TANF", "benefit", 1),
+    "ssi": ("SSI", "benefit", 1),
+    "social_security": ("Social Security", "benefit", 1),
+    # Housing
+    "spm_unit_capped_housing_subsidy": ("Housing Subsidy", "benefit", 1),
+    # Healthcare
+    "medicaid": ("Medicaid", "benefit", 1),
+    "chip": ("CHIP", "benefit", 1),
+    # Energy/utilities
+    "liheap": ("LIHEAP (Energy)", "benefit", 2),
+    "lifeline": ("Lifeline (Phone)", "benefit", 2),
+    "acp": ("ACP (Broadband)", "benefit", 2),
+    # Childcare
+    "ccdf": ("Childcare Subsidy (CCDF)", "benefit", 2),
+    # Tax credits - primary
+    "earned_income_tax_credit": ("Earned Income Tax Credit", "credit", 1),
+    "child_tax_credit": ("Child Tax Credit", "credit", 1),
+    "refundable_ctc": ("Refundable CTC", "credit", 2),
+    "cdcc": ("Child & Dependent Care Credit", "credit", 1),
+    "premium_tax_credit": ("Premium Tax Credit (ACA)", "credit", 1),
+    # Tax credits - secondary
+    "ctc_refundable_maximum": ("CTC Refundable Max", "credit", 2),
+    "additional_child_tax_credit": ("Additional CTC", "credit", 2),
+    "savers_credit": ("Saver's Credit", "credit", 2),
+    "american_opportunity_credit": ("American Opportunity Credit", "credit", 2),
+    "lifetime_learning_credit": ("Lifetime Learning Credit", "credit", 2),
 }
 
-# Category mapping for frontend display
-VARIABLE_CATEGORIES = {
-    "household_net_income": "income",
-    "employment_income": "income",
-    "income_tax": "tax",
-    "state_income_tax": "tax",
-    "employee_payroll_tax": "tax",
-    "self_employment_tax": "tax",
-    "snap": "benefit",
-    "tanf": "benefit",
-    "ssi": "benefit",
-    "social_security": "benefit",
-    "earned_income_tax_credit": "credit",
-    "child_tax_credit": "credit",
-    "refundable_ctc": "credit",
-    "premium_tax_credit": "credit",
-    "medicaid": "benefit",
-    "chip": "benefit",
-    "wic": "benefit",
-    "school_meal_subsidy": "benefit",
-    "spm_unit_capped_housing_subsidy": "benefit",
-    "cdcc": "credit",
-}
+# Helper functions for backward compatibility
+def get_label(var_name: str) -> str:
+    return VARIABLE_METADATA.get(var_name, (var_name, "benefit", 2))[0]
+
+def get_category(var_name: str) -> str:
+    return VARIABLE_METADATA.get(var_name, (var_name, "benefit", 2))[1]
+
+def get_priority(var_name: str) -> int:
+    return VARIABLE_METADATA.get(var_name, (var_name, "benefit", 2))[2]
 
 
 def create_household_from_request(data: dict) -> Household:
@@ -143,28 +151,29 @@ def format_result_for_frontend(result) -> dict:
             continue  # Skip net income from detailed metrics
         metrics.append({
             "name": var_name,
-            "label": VARIABLE_LABELS.get(var_name, var_name),
+            "label": get_label(var_name),
             "before": change.before,
             "after": change.after,
-            "category": VARIABLE_CATEGORIES.get(var_name, "benefit"),
+            "category": get_category(var_name),
+            "priority": get_priority(var_name),
         })
 
     # Calculate totals
     total_tax_before = sum(
         c.before for name, c in result.changes.items()
-        if VARIABLE_CATEGORIES.get(name) == "tax"
+        if get_category(name) == "tax"
     )
     total_tax_after = sum(
         c.after for name, c in result.changes.items()
-        if VARIABLE_CATEGORIES.get(name) == "tax"
+        if get_category(name) == "tax"
     )
     total_benefits_before = sum(
         c.before for name, c in result.changes.items()
-        if VARIABLE_CATEGORIES.get(name) in ("benefit", "credit")
+        if get_category(name) in ("benefit", "credit")
     )
     total_benefits_after = sum(
         c.after for name, c in result.changes.items()
-        if VARIABLE_CATEGORIES.get(name) in ("benefit", "credit")
+        if get_category(name) in ("benefit", "credit")
     )
 
     return {

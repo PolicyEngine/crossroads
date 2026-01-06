@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { SimulationResult, BenefitMetric } from '@/types';
 import {
   BarChart,
@@ -86,6 +87,17 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
       category: m.category,
     }));
 
+  if (chartData.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-black mb-4">
+          Before vs After Comparison
+        </h3>
+        <p className="text-gray-500 text-center py-8">No data to display</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h3 className="text-lg font-semibold text-black mb-4">
@@ -136,6 +148,17 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
     return entry.change > 0 ? '#22c55e' : '#ef4444';
   };
 
+  if (chartData.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-black mb-4">
+          What Changed
+        </h3>
+        <p className="text-gray-500 text-center py-8">No changes detected</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h3 className="text-lg font-semibold text-black mb-4">
@@ -173,18 +196,28 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
   );
 }
 
-function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
+function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; showAll: boolean }) {
+  // Filter by priority if not showing all
+  const filteredMetrics = showAll
+    ? metrics
+    : metrics.filter(m => m.priority === 1 || (m.before !== 0 || m.after !== 0));
+
   const categories: Record<string, { label: string; items: BenefitMetric[] }> = {
     tax: { label: 'Taxes', items: [] },
     credit: { label: 'Tax Credits', items: [] },
     benefit: { label: 'Benefits', items: [] },
   };
 
-  metrics.forEach((m) => {
+  filteredMetrics.forEach((m) => {
     if (categories[m.category]) {
       categories[m.category].items.push(m);
     }
   });
+
+  // Filter out empty categories
+  const nonEmptyCategories = Object.entries(categories).filter(
+    ([, category]) => category.items.length > 0
+  );
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -192,7 +225,7 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
         Detailed Breakdown
       </h3>
       <div className="space-y-6">
-        {Object.entries(categories).map(([key, category]) => (
+        {nonEmptyCategories.map(([key, category]) => (
           <div key={key}>
             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
               {category.label}
@@ -243,6 +276,18 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 }
 
 export default function ResultsView({ result, onReset }: ResultsViewProps) {
+  const [showAllBenefits, setShowAllBenefits] = useState(false);
+
+  // Get metrics with changes or non-zero values for primary view
+  const primaryMetrics = result.before.metrics.filter(
+    m => m.priority === 1 || m.before !== 0 || m.after !== 0
+  );
+
+  // Count secondary benefits that have values
+  const secondaryWithValues = result.before.metrics.filter(
+    m => m.priority === 2 && (m.before !== 0 || m.after !== 0)
+  );
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -266,14 +311,53 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
         />
       </div>
 
+      {/* View Toggle */}
+      <div className="flex justify-center">
+        <div className="inline-flex rounded-lg border border-gray-200 p-1 bg-white">
+          <button
+            onClick={() => setShowAllBenefits(false)}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              !showAllBenefits
+                ? 'bg-[#39C6C0] text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Key Changes
+          </button>
+          <button
+            onClick={() => setShowAllBenefits(true)}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              showAllBenefits
+                ? 'bg-[#39C6C0] text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            All Benefits ({result.before.metrics.length})
+          </button>
+        </div>
+      </div>
+
+      {/* Info about secondary benefits */}
+      {!showAllBenefits && secondaryWithValues.length > 0 && (
+        <div className="text-center text-sm text-gray-500">
+          {secondaryWithValues.length} additional benefit{secondaryWithValues.length !== 1 ? 's' : ''} with values not shown.{' '}
+          <button
+            onClick={() => setShowAllBenefits(true)}
+            className="text-[#39C6C0] hover:underline"
+          >
+            Show all
+          </button>
+        </div>
+      )}
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ComparisonChart metrics={result.before.metrics} />
-        <ChangeBreakdown metrics={result.before.metrics} />
+        <ComparisonChart metrics={showAllBenefits ? result.before.metrics : primaryMetrics} />
+        <ChangeBreakdown metrics={showAllBenefits ? result.before.metrics : primaryMetrics} />
       </div>
 
       {/* Detailed Breakdown */}
-      <DetailedBreakdown metrics={result.before.metrics} />
+      <DetailedBreakdown metrics={result.before.metrics} showAll={showAllBenefits} />
 
       {/* Reset Button */}
       <div className="flex justify-center pt-4">

@@ -34,6 +34,7 @@ export interface BenefitMetric {
   before: number;
   after: number;
   category: 'income' | 'tax' | 'benefit' | 'credit';
+  priority: 1 | 2; // 1 = primary (always shown), 2 = secondary (in "More" tab)
 }
 
 export interface SimulationResult {

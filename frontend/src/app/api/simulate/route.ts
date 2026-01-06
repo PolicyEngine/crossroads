@@ -78,14 +78,14 @@ function generateMockMetrics(
   const afterSocialSecurity = afterAge >= 65 ? 20000 : 0;
 
   const beforeMetrics: BenefitMetric[] = [
-    { name: 'income_tax', label: 'Federal Income Tax', before: baseIncomeTax, after: afterIncomeTax, category: 'tax' },
-    { name: 'payroll_tax', label: 'Payroll Tax', before: basePayrollTax, after: afterPayrollTax, category: 'tax' },
-    { name: 'eitc', label: 'Earned Income Tax Credit', before: baseEITC, after: afterEITC, category: 'credit' },
-    { name: 'ctc', label: 'Child Tax Credit', before: baseCTC, after: afterCTC, category: 'credit' },
-    { name: 'snap', label: 'SNAP Benefits', before: baseSNAP, after: afterSNAP, category: 'benefit' },
-    { name: 'ptc', label: 'Premium Tax Credit (ACA)', before: basePTC, after: afterPTC, category: 'credit' },
-    { name: 'medicaid', label: 'Medicaid', before: baseMedicaid, after: afterMedicaid, category: 'benefit' },
-    { name: 'social_security', label: 'Social Security', before: 0, after: afterSocialSecurity, category: 'benefit' },
+    { name: 'income_tax', label: 'Federal Income Tax', before: baseIncomeTax, after: afterIncomeTax, category: 'tax', priority: 1 },
+    { name: 'payroll_tax', label: 'Payroll Tax', before: basePayrollTax, after: afterPayrollTax, category: 'tax', priority: 1 },
+    { name: 'eitc', label: 'Earned Income Tax Credit', before: baseEITC, after: afterEITC, category: 'credit', priority: 1 },
+    { name: 'ctc', label: 'Child Tax Credit', before: baseCTC, after: afterCTC, category: 'credit', priority: 1 },
+    { name: 'snap', label: 'SNAP Benefits', before: baseSNAP, after: afterSNAP, category: 'benefit', priority: 1 },
+    { name: 'ptc', label: 'Premium Tax Credit (ACA)', before: basePTC, after: afterPTC, category: 'credit', priority: 1 },
+    { name: 'medicaid', label: 'Medicaid', before: baseMedicaid, after: afterMedicaid, category: 'benefit', priority: 1 },
+    { name: 'social_security', label: 'Social Security', before: 0, after: afterSocialSecurity, category: 'benefit', priority: 1 },
   ];
 
   const afterMetrics = beforeMetrics.map((m) => ({

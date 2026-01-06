@@ -11,34 +11,52 @@ from .events.base import LifeEvent
 from .household import Household
 
 
-# Key variables to track in comparisons
+# All variables to track in comparisons - comprehensive list
 OUTPUT_VARIABLES = [
-    # Net income
+    # Net income (summary)
     "household_net_income",
     # Gross income
     "employment_income",
-    # Tax liability
+    "self_employment_income",
+    # === TAXES ===
     "income_tax",
     "state_income_tax",
     "employee_payroll_tax",
     "self_employment_tax",
-    # Major federal benefits
+    # === MAJOR BENEFITS ===
+    # Food assistance
     "snap",
+    "free_school_meals",
+    "reduced_price_school_meals",
+    "school_meal_subsidy",
+    "wic",
+    # Cash assistance
     "tanf",
     "ssi",
     "social_security",
-    "wic",
-    "school_meal_subsidy",
+    # Housing
     "spm_unit_capped_housing_subsidy",
-    # Tax credits
+    # Healthcare
+    "medicaid",
+    "chip",
+    # Energy/utilities
+    "liheap",  # Low Income Home Energy Assistance
+    "lifeline",  # Phone/broadband subsidy
+    "acp",  # Affordable Connectivity Program
+    # Childcare
+    "ccdf",  # Child Care Development Fund subsidy
+    # === TAX CREDITS ===
     "earned_income_tax_credit",
     "child_tax_credit",
     "refundable_ctc",
     "cdcc",  # Child and Dependent Care Credit
-    # Healthcare
     "premium_tax_credit",
-    "medicaid",
-    "chip",
+    "ctc_refundable_maximum",
+    "additional_child_tax_credit",
+    # Other credits
+    "savers_credit",
+    "american_opportunity_credit",
+    "lifetime_learning_credit",
 ]
 
 
