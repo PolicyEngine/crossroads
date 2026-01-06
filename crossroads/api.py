@@ -39,6 +39,10 @@ VARIABLE_LABELS = {
     "premium_tax_credit": "Premium Tax Credit (ACA)",
     "medicaid": "Medicaid",
     "chip": "CHIP",
+    "wic": "WIC",
+    "school_meal_subsidy": "School Meals",
+    "spm_unit_capped_housing_subsidy": "Housing Subsidy",
+    "cdcc": "Child Care Credit",
 }
 
 # Category mapping for frontend display
@@ -59,6 +63,10 @@ VARIABLE_CATEGORIES = {
     "premium_tax_credit": "credit",
     "medicaid": "benefit",
     "chip": "benefit",
+    "wic": "benefit",
+    "school_meal_subsidy": "benefit",
+    "spm_unit_capped_housing_subsidy": "benefit",
+    "cdcc": "credit",
 }
 
 

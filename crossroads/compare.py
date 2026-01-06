@@ -27,10 +27,14 @@ OUTPUT_VARIABLES = [
     "tanf",
     "ssi",
     "social_security",
+    "wic",
+    "school_meal_subsidy",
+    "spm_unit_capped_housing_subsidy",
     # Tax credits
     "earned_income_tax_credit",
     "child_tax_credit",
     "refundable_ctc",
+    "cdcc",  # Child and Dependent Care Credit
     # Healthcare
     "premium_tax_credit",
     "medicaid",

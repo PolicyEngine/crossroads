@@ -36,9 +36,10 @@ interface SummaryCardProps {
   before: number;
   after: number;
   inverse?: boolean;
+  note?: string;
 }
 
-function SummaryCard({ title, before, after, inverse = false }: SummaryCardProps) {
+function SummaryCard({ title, before, after, inverse = false, note }: SummaryCardProps) {
   const diff = after - before;
   const isPositive = inverse ? diff < 0 : diff > 0;
   const isNegative = inverse ? diff > 0 : diff < 0;
@@ -67,6 +68,9 @@ function SummaryCard({ title, before, after, inverse = false }: SummaryCardProps
       <p className="mt-1 text-sm text-gray-500">
         was {formatCurrency(before)}
       </p>
+      {note && (
+        <p className="mt-1 text-xs text-gray-400">{note}</p>
+      )}
     </div>
   );
 }
@@ -247,6 +251,7 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
           title="Net Income"
           before={result.before.netIncome}
           after={result.after.netIncome}
+          note="Includes all taxes, benefits, and costs"
         />
         <SummaryCard
           title="Total Taxes"
