@@ -72,7 +72,7 @@ export default function LifeEventSelector({
       case 'getting_married':
         return (
           <div className="mt-3 pt-3 border-t border-gray-200 space-y-4">
-            <h4 className="text-sm font-semibold text-gray-800">Future Spouse Details</h4>
+            <h4 className="text-sm font-semibold text-black">Future Spouse Details</h4>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -280,7 +280,7 @@ export default function LifeEventSelector({
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+      <h2 className="text-xl font-semibold text-black mb-6">
         Select a Life Event
       </h2>
 

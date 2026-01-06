@@ -83,7 +83,7 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+      <h3 className="text-lg font-semibold text-black mb-4">
         Before vs After Comparison
       </h3>
       <div className="h-80">
@@ -133,7 +133,7 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+      <h3 className="text-lg font-semibold text-black mb-4">
         What Changed
       </h3>
       <div className="h-64">
@@ -183,7 +183,7 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+      <h3 className="text-lg font-semibold text-black mb-4">
         Detailed Breakdown
       </h3>
       <div className="space-y-6">

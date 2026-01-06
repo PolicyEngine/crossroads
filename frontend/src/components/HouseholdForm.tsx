@@ -41,7 +41,7 @@ export default function HouseholdForm({
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+      <h2 className="text-xl font-semibold text-black mb-6">
         Your Household
       </h2>
 
@@ -167,7 +167,7 @@ export default function HouseholdForm({
         {/* Spouse Section - shown when married */}
         {isMarried && (
           <div className="border-t border-gray-200 pt-5 mt-5">
-            <h3 className="text-md font-semibold text-gray-800 mb-4">Spouse Information</h3>
+            <h3 className="text-md font-semibold text-black mb-4">Spouse Information</h3>
 
             {/* Spouse Age */}
             <div className="mb-4">
@@ -242,7 +242,7 @@ export default function HouseholdForm({
         {/* Children Section */}
         <div className="border-t border-gray-200 pt-5 mt-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-md font-semibold text-gray-800">Children</h3>
+            <h3 className="text-md font-semibold text-black">Children</h3>
             <button
               type="button"
               onClick={addChild}
