@@ -32,7 +32,7 @@ export interface BenefitMetric {
   label: string;
   before: number;
   after: number;
-  category: 'income' | 'tax' | 'benefit' | 'credit';
+  category: 'income' | 'tax' | 'benefit' | 'credit' | 'state_credit' | 'state_benefit';
   priority: 1 | 2; // 1 = primary (always shown), 2 = secondary (in "More" tab)
 }
 

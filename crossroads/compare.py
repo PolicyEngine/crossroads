@@ -18,12 +18,13 @@ OUTPUT_VARIABLES = [
     # Gross income
     "employment_income",
     "self_employment_income",
-    # === TAXES ===
+    # === FEDERAL TAXES ===
     "income_tax",
-    "state_income_tax",
     "employee_payroll_tax",
     "self_employment_tax",
-    # === MAJOR BENEFITS ===
+    # === STATE TAXES ===
+    "state_income_tax",
+    # === FEDERAL BENEFITS ===
     # Food assistance
     "snap",
     "free_school_meals",
@@ -45,18 +46,80 @@ OUTPUT_VARIABLES = [
     "acp",  # Affordable Connectivity Program
     # Childcare
     "ccdf",  # Child Care Development Fund subsidy
-    # === TAX CREDITS ===
+    # === FEDERAL TAX CREDITS ===
     "earned_income_tax_credit",
-    "child_tax_credit",
-    "refundable_ctc",
+    "ctc",  # Total Child Tax Credit
+    "non_refundable_ctc",  # CTC portion that reduces tax liability
+    "refundable_ctc",  # CTC portion that can be refunded
     "cdcc",  # Child and Dependent Care Credit
     "premium_tax_credit",
-    "ctc_refundable_maximum",
-    "additional_child_tax_credit",
     # Other credits
     "savers_credit",
     "american_opportunity_credit",
     "lifetime_learning_credit",
+    # === STATE BENEFITS & CREDITS ===
+    # Aggregates (auto-filled based on state)
+    "state_eitc",  # State EITC (aggregates all state EITCs)
+    "state_ctc",  # State CTC (aggregates all state CTCs)
+    # California
+    "ca_eitc",
+    "ca_yctc",  # Young Child Tax Credit
+    "ca_renter_credit",
+    "ca_tanf",  # CalWORKs cash assistance
+    "ca_state_supplement",  # SSI state supplement
+    # New York
+    "ny_eitc",
+    "ny_ctc",
+    "ny_tanf",
+    # Colorado
+    "co_eitc",
+    "co_ctc",
+    "co_tanf",
+    "co_state_supplement",  # SSI supplement
+    "co_ccap_subsidy",  # Childcare assistance
+    "co_family_affordability_credit",
+    # Maryland
+    "md_eitc",
+    "md_ctc",
+    # New Jersey
+    "nj_eitc",
+    "nj_ctc",
+    # Illinois
+    "il_eitc",
+    "il_ctc",
+    # DC
+    "dc_eitc",
+    "dc_ctc",
+    "dc_tanf",
+    "dc_snap_temporary_local_benefit",  # DC SNAP supplement
+    # Oregon
+    "or_eitc",
+    "or_ctc",
+    # New Mexico
+    "nm_eitc",
+    "nm_ctc",
+    # Massachusetts
+    "ma_eitc",
+    "ma_child_and_family_credit",
+    # Washington (no income tax but has this)
+    "wa_working_families_tax_credit",
+    # Connecticut
+    "ct_child_tax_rebate",
+    "ct_property_tax_credit",
+    # Minnesota
+    "mn_child_and_working_families_credits",
+    # Other states with EITC
+    "vt_eitc",
+    "vt_ctc",
+    "me_eitc",
+    "ri_eitc",
+    "oh_eitc",
+    "ne_eitc",
+    "sc_eitc",
+    "ok_eitc",
+    "hi_eitc",
+    "ut_eitc",
+    "ut_ctc",
 ]
 
 

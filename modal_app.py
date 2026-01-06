@@ -77,16 +77,77 @@ def simulate(data: dict) -> dict:
         "ccdf": ("Childcare Subsidy (CCDF)", "benefit", 2),
         # Tax credits - primary
         "earned_income_tax_credit": ("Earned Income Tax Credit", "credit", 1),
-        "child_tax_credit": ("Child Tax Credit", "credit", 1),
-        "refundable_ctc": ("Refundable CTC", "credit", 2),
+        "ctc": ("Child Tax Credit", "credit", 1),
+        "non_refundable_ctc": ("CTC (reduces taxes)", "credit", 1),
+        "refundable_ctc": ("CTC (refundable)", "credit", 2),
         "cdcc": ("Child & Dependent Care Credit", "credit", 1),
         "premium_tax_credit": ("Premium Tax Credit (ACA)", "credit", 1),
         # Tax credits - secondary
-        "ctc_refundable_maximum": ("CTC Refundable Max", "credit", 2),
-        "additional_child_tax_credit": ("Additional CTC", "credit", 2),
         "savers_credit": ("Saver's Credit", "credit", 2),
         "american_opportunity_credit": ("American Opportunity Credit", "credit", 2),
         "lifetime_learning_credit": ("Lifetime Learning Credit", "credit", 2),
+        # State benefits & credits
+        "state_eitc": ("State EITC", "state_credit", 1),
+        "state_ctc": ("State CTC", "state_credit", 1),
+        # California
+        "ca_eitc": ("CalEITC", "state_credit", 1),
+        "ca_yctc": ("CA Young Child Tax Credit", "state_credit", 1),
+        "ca_renter_credit": ("CA Renter Credit", "state_credit", 2),
+        "ca_tanf": ("CalWORKs (CA TANF)", "state_benefit", 1),
+        "ca_state_supplement": ("CA SSI Supplement", "state_benefit", 1),
+        # New York
+        "ny_eitc": ("NY EITC", "state_credit", 1),
+        "ny_ctc": ("NY Child Tax Credit", "state_credit", 1),
+        "ny_tanf": ("NY TANF", "state_benefit", 1),
+        # Colorado
+        "co_eitc": ("CO EITC", "state_credit", 1),
+        "co_ctc": ("CO Child Tax Credit", "state_credit", 1),
+        "co_tanf": ("CO TANF", "state_benefit", 1),
+        "co_state_supplement": ("CO SSI Supplement", "state_benefit", 1),
+        "co_ccap_subsidy": ("CO Childcare Assistance", "state_benefit", 1),
+        "co_family_affordability_credit": ("CO Family Affordability Credit", "state_credit", 1),
+        # Maryland
+        "md_eitc": ("MD EITC", "state_credit", 1),
+        "md_ctc": ("MD Child Tax Credit", "state_credit", 1),
+        # New Jersey
+        "nj_eitc": ("NJ EITC", "state_credit", 1),
+        "nj_ctc": ("NJ Child Tax Credit", "state_credit", 1),
+        # Illinois
+        "il_eitc": ("IL EITC", "state_credit", 1),
+        "il_ctc": ("IL Child Tax Credit", "state_credit", 1),
+        # DC
+        "dc_eitc": ("DC EITC", "state_credit", 1),
+        "dc_ctc": ("DC Child Tax Credit", "state_credit", 1),
+        "dc_tanf": ("DC TANF", "state_benefit", 1),
+        "dc_snap_temporary_local_benefit": ("DC SNAP Supplement", "state_benefit", 1),
+        # Oregon
+        "or_eitc": ("OR EITC", "state_credit", 1),
+        "or_ctc": ("OR Child Tax Credit", "state_credit", 1),
+        # New Mexico
+        "nm_eitc": ("NM EITC", "state_credit", 1),
+        "nm_ctc": ("NM Child Tax Credit", "state_credit", 1),
+        # Massachusetts
+        "ma_eitc": ("MA EITC", "state_credit", 1),
+        "ma_child_and_family_credit": ("MA Child & Family Credit", "state_credit", 1),
+        # Washington
+        "wa_working_families_tax_credit": ("WA Working Families Credit", "state_credit", 1),
+        # Connecticut
+        "ct_child_tax_rebate": ("CT Child Tax Rebate", "state_credit", 1),
+        "ct_property_tax_credit": ("CT Property Tax Credit", "state_credit", 2),
+        # Minnesota
+        "mn_child_and_working_families_credits": ("MN Working Family Credit", "state_credit", 1),
+        # Other states
+        "vt_eitc": ("VT EITC", "state_credit", 1),
+        "vt_ctc": ("VT Child Tax Credit", "state_credit", 1),
+        "me_eitc": ("ME EITC", "state_credit", 1),
+        "ri_eitc": ("RI EITC", "state_credit", 1),
+        "oh_eitc": ("OH EITC", "state_credit", 1),
+        "ne_eitc": ("NE EITC", "state_credit", 1),
+        "sc_eitc": ("SC EITC", "state_credit", 1),
+        "ok_eitc": ("OK EITC", "state_credit", 1),
+        "hi_eitc": ("HI EITC", "state_credit", 1),
+        "ut_eitc": ("UT EITC", "state_credit", 1),
+        "ut_ctc": ("UT Child Tax Credit", "state_credit", 1),
     }
 
     def get_label(var_name):
@@ -139,7 +200,7 @@ def simulate(data: dict) -> dict:
             "moving_states": lambda: Move(new_state=params.get("newState", "TX")),
             "getting_married": lambda: Marriage(
                 spouse_age=params.get("spouseAge", 30),
-                spouse_income=params.get("spouseIncome", 0),
+                spouse_employment_income=params.get("spouseIncome", 0),
             ),
             "changing_income": lambda: JobChange(
                 new_income=household.members[0].employment_income

@@ -233,12 +233,16 @@ function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; sho
 
   const categories: Record<string, { label: string; items: BenefitMetric[] }> = {
     tax: { label: 'Taxes', items: [] },
-    credit: { label: 'Tax Credits', items: [] },
-    benefit: { label: 'Benefits', items: [] },
+    credit: { label: 'Federal Tax Credits', items: [] },
+    benefit: { label: 'Federal Benefits', items: [] },
+    state: { label: 'State Programs', items: [] },
   };
 
   filteredMetrics.forEach((m) => {
-    if (categories[m.category]) {
+    // Combine state_credit and state_benefit into one "state" category
+    if (m.category === 'state_credit' || m.category === 'state_benefit') {
+      categories.state.items.push(m);
+    } else if (categories[m.category]) {
       categories[m.category].items.push(m);
     }
   });

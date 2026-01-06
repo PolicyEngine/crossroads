@@ -40,6 +40,8 @@ export default function Home() {
 
     setIsLoading(true);
     setError(null);
+    setResult(null);
+    setStep('results'); // Navigate to results immediately
 
     try {
       const response = await fetch('/api/simulate', {
@@ -57,9 +59,9 @@ export default function Home() {
 
       const data = await response.json();
       setResult(data);
-      setStep('results');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      // Stay on results page to show error
     } finally {
       setIsLoading(false);
     }
@@ -240,53 +242,100 @@ export default function Home() {
           </div>
         )}
 
-        {step === 'results' && result && (
+        {step === 'results' && (
           <div className="animate-fadeIn">
-            {/* Scenario Summary */}
-            <div className="mb-8 p-5 bg-[#E6FFFA] rounded-xl border border-[#319795]/20">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-900">Your Scenario</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setStep('household')}
-                    className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
-                  >
-                    Edit Household
-                  </button>
-                  <span className="text-gray-300">|</span>
-                  <button
-                    onClick={() => setStep('event')}
-                    className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
-                  >
-                    Change Event
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">State</span>
-                  <p className="font-medium text-gray-900">{household.state}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Filing Status</span>
-                  <p className="font-medium text-gray-900 capitalize">
-                    {household.filingStatus.replace(/_/g, ' ')}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Income</span>
-                  <p className="font-medium text-gray-900">${household.income.toLocaleString()}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Life Event</span>
-                  <p className="font-medium text-gray-900 capitalize">
-                    {selectedEvent?.replace(/_/g, ' ')}
+            {isLoading ? (
+              /* Loading State */
+              <div className="card p-8 sm:p-12">
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 border-4 border-[#E6FFFA] rounded-full"></div>
+                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#319795] rounded-full border-t-transparent animate-spin"></div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Running Simulation</h3>
+                  <p className="text-gray-500 text-center max-w-sm">
+                    Calculating how {selectedEvent?.replace(/_/g, ' ')} will affect your taxes and benefits...
                   </p>
                 </div>
               </div>
-            </div>
+            ) : error ? (
+              /* Error State */
+              <div className="card p-8 sm:p-12">
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
+                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Simulation Failed</h3>
+                  <p className="text-gray-500 text-center max-w-sm mb-6">
+                    {error}
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setStep('event')}
+                      className="btn btn-secondary"
+                    >
+                      Back to Life Event
+                    </button>
+                    <button
+                      onClick={handleSimulate}
+                      className="btn btn-primary"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : result ? (
+              <>
+                {/* Scenario Summary */}
+                <div className="mb-8 p-5 bg-[#E6FFFA] rounded-xl border border-[#319795]/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-900">Your Scenario</h3>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setStep('household')}
+                        className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
+                      >
+                        Edit Household
+                      </button>
+                      <span className="text-gray-300">|</span>
+                      <button
+                        onClick={() => setStep('event')}
+                        className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
+                      >
+                        Change Event
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">State</span>
+                      <p className="font-medium text-gray-900">{household.state}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Filing Status</span>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {household.filingStatus.replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Income</span>
+                      <p className="font-medium text-gray-900">${household.income.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Life Event</span>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {selectedEvent?.replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-            <ResultsView result={result} onReset={handleReset} />
+                <ResultsView result={result} onReset={handleReset} />
+              </>
+            ) : null}
           </div>
         )}
       </div>
