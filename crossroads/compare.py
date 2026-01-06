@@ -238,28 +238,20 @@ class ComparisonResult:
 
 
 def _run_simulation(situation: dict[str, Any], year: int) -> dict[str, float]:
-    """Run a PolicyEngine simulation and extract key outputs.
-
-    Variables are processed in batches of 5 to avoid overwhelming
-    any downstream services.
-    """
+    """Run a PolicyEngine simulation and extract key outputs."""
     sim = Simulation(situation=situation)
     results = {}
 
-    # Process variables in batches of 5
-    batch_size = 5
-    for i in range(0, len(OUTPUT_VARIABLES), batch_size):
-        batch = OUTPUT_VARIABLES[i:i + batch_size]
-        for var in batch:
-            try:
-                value = sim.calculate(var, year)
-                # Sum across all entities if array
-                if hasattr(value, "__iter__"):
-                    results[var] = float(sum(value))
-                else:
-                    results[var] = float(value)
-            except Exception:
-                results[var] = 0.0
+    for var in OUTPUT_VARIABLES:
+        try:
+            value = sim.calculate(var, year)
+            # Sum across all entities if array
+            if hasattr(value, "__iter__"):
+                results[var] = float(sum(value))
+            else:
+                results[var] = float(value)
+        except Exception:
+            results[var] = 0.0
 
     return results
 

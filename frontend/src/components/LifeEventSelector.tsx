@@ -69,7 +69,7 @@ export default function LifeEventSelector({
               <div>
                 <label className="label">Spouse&apos;s Annual Income</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
                   <input
                     type="number"
                     min="0"
@@ -83,7 +83,7 @@ export default function LifeEventSelector({
                       });
                     }}
                     disabled={disabled}
-                    className="input-field pl-8"
+                    className="input-field pl-10"
                   />
                 </div>
               </div>
@@ -181,7 +181,7 @@ export default function LifeEventSelector({
           <div className="mt-4 pt-4 border-t border-gray-100">
             <label className="label">New Annual Income</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
               <input
                 type="number"
                 min="0"
@@ -195,7 +195,7 @@ export default function LifeEventSelector({
                   });
                 }}
                 disabled={disabled}
-                className="input-field pl-8"
+                className="input-field pl-10"
               />
             </div>
             <p className="mt-1.5 text-xs text-gray-500">
@@ -209,7 +209,7 @@ export default function LifeEventSelector({
           <div className="mt-4 pt-4 border-t border-gray-100">
             <label className="label">Expected Weekly Unemployment Benefits</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
               <input
                 type="number"
                 min="0"
@@ -223,7 +223,7 @@ export default function LifeEventSelector({
                   });
                 }}
                 disabled={disabled}
-                className="input-field pl-8"
+                className="input-field pl-10"
               />
             </div>
             <p className="mt-1.5 text-xs text-gray-500">

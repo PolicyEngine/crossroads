@@ -39,15 +39,27 @@ export default function HouseholdForm({
     updateField('childAges', newAges);
   };
 
-  // Handle number input that allows empty string during typing
+  // Handle number input - only update if valid number, allow empty during typing
   const handleNumberChange = (
+    field: 'income' | 'spouseIncome' | 'age' | 'spouseAge',
+    value: string,
+  ) => {
+    const parsed = parseInt(value);
+    // Only update state if it's a valid number - allow empty field during typing
+    if (!isNaN(parsed)) {
+      updateField(field, parsed);
+    }
+  };
+
+  // Validate and clamp on blur
+  const handleNumberBlur = (
     field: 'income' | 'spouseIncome' | 'age' | 'spouseAge',
     value: string,
     min: number,
     max?: number
   ) => {
     const parsed = parseInt(value);
-    if (value === '' || isNaN(parsed)) {
+    if (isNaN(parsed) || value === '') {
       updateField(field, min);
     } else {
       const clamped = max !== undefined ? Math.min(max, Math.max(min, parsed)) : Math.max(min, parsed);
@@ -119,12 +131,8 @@ export default function HouseholdForm({
               min="18"
               max="100"
               value={household.age}
-              onChange={(e) => handleNumberChange('age', e.target.value, 18, 100)}
-              onBlur={(e) => {
-                if (e.target.value === '') {
-                  updateField('age', 18);
-                }
-              }}
+              onChange={(e) => handleNumberChange('age', e.target.value)}
+              onBlur={(e) => handleNumberBlur('age', e.target.value, 18, 100)}
               disabled={disabled}
               className="input-field"
             />
@@ -135,16 +143,17 @@ export default function HouseholdForm({
               Annual Income
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
               <input
                 id="income"
                 type="number"
                 min="0"
                 step="1000"
                 value={household.income}
-                onChange={(e) => handleNumberChange('income', e.target.value, 0)}
+                onChange={(e) => handleNumberChange('income', e.target.value)}
+                onBlur={(e) => handleNumberBlur('income', e.target.value, 0)}
                 disabled={disabled}
-                className="input-field pl-8"
+                className="input-field pl-10"
               />
             </div>
           </div>
@@ -184,12 +193,8 @@ export default function HouseholdForm({
                     min="18"
                     max="100"
                     value={household.spouseAge}
-                    onChange={(e) => handleNumberChange('spouseAge', e.target.value, 18, 100)}
-                    onBlur={(e) => {
-                      if (e.target.value === '') {
-                        updateField('spouseAge', 18);
-                      }
-                    }}
+                    onChange={(e) => handleNumberChange('spouseAge', e.target.value)}
+                    onBlur={(e) => handleNumberBlur('spouseAge', e.target.value, 18, 100)}
                     disabled={disabled}
                     className="input-field"
                   />
@@ -200,16 +205,17 @@ export default function HouseholdForm({
                     Spouse&apos;s Annual Income
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
                     <input
                       id="spouseIncome"
                       type="number"
                       min="0"
                       step="1000"
                       value={household.spouseIncome}
-                      onChange={(e) => handleNumberChange('spouseIncome', e.target.value, 0)}
+                      onChange={(e) => handleNumberChange('spouseIncome', e.target.value)}
+                      onBlur={(e) => handleNumberBlur('spouseIncome', e.target.value, 0)}
                       disabled={disabled}
-                      className="input-field pl-8"
+                      className="input-field pl-10"
                     />
                   </div>
                 </div>
