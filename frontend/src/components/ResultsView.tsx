@@ -226,11 +226,28 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
   );
 }
 
-function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; showAll: boolean }) {
-  const filteredMetrics = showAll
-    ? metrics
-    : metrics.filter(m => m.priority === 1 || (m.before !== 0 || m.after !== 0));
+function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boolean }) {
+  const [showZeroPrograms, setShowZeroPrograms] = useState(false);
 
+  // Separate metrics into those with values and those without
+  const activeMetrics: BenefitMetric[] = [];
+  const zeroMetrics: BenefitMetric[] = [];
+
+  metrics.forEach((m) => {
+    const hasValue = m.before !== 0 || m.after !== 0;
+    const isStateProgram = m.category === 'state_credit' || m.category === 'state_benefit';
+
+    // Always hide state programs with no values (too many to show)
+    if (isStateProgram && !hasValue) return;
+
+    if (hasValue) {
+      activeMetrics.push(m);
+    } else {
+      zeroMetrics.push(m);
+    }
+  });
+
+  // Build categories for active metrics
   const categories: Record<string, { label: string; items: BenefitMetric[] }> = {
     tax: { label: 'Taxes', items: [] },
     credit: { label: 'Federal Tax Credits', items: [] },
@@ -238,18 +255,74 @@ function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; sho
     state: { label: 'State Programs', items: [] },
   };
 
-  filteredMetrics.forEach((m) => {
-    // Combine state_credit and state_benefit into one "state" category
-    if (m.category === 'state_credit' || m.category === 'state_benefit') {
+  activeMetrics.forEach((m) => {
+    const isStateProgram = m.category === 'state_credit' || m.category === 'state_benefit';
+    if (isStateProgram) {
       categories.state.items.push(m);
     } else if (categories[m.category]) {
       categories[m.category].items.push(m);
     }
   });
 
+  // Build categories for zero metrics (only federal, not state)
+  const zeroCategories: Record<string, { label: string; items: BenefitMetric[] }> = {
+    credit: { label: 'Federal Tax Credits', items: [] },
+    benefit: { label: 'Federal Benefits', items: [] },
+  };
+
+  zeroMetrics.forEach((m) => {
+    if (zeroCategories[m.category]) {
+      zeroCategories[m.category].items.push(m);
+    }
+  });
+
   const nonEmptyCategories = Object.entries(categories).filter(
     ([, category]) => category.items.length > 0
   );
+
+  const nonEmptyZeroCategories = Object.entries(zeroCategories).filter(
+    ([, category]) => category.items.length > 0
+  );
+
+  const renderItem = (item: BenefitMetric) => {
+    const diff = item.after - item.before;
+    const isTax = item.category === 'tax';
+    const isPositive = isTax ? diff < 0 : diff > 0;
+    const isNegative = isTax ? diff > 0 : diff < 0;
+
+    return (
+      <div
+        key={item.name}
+        className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <span className="text-sm text-gray-700">{item.label}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-400">
+            {formatCurrency(item.before)}
+          </span>
+          <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-sm font-medium text-gray-900">
+            {formatCurrency(item.after)}
+          </span>
+          {diff !== 0 && (
+            <span
+              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                isPositive
+                  ? 'bg-green-50 text-green-600'
+                  : isNegative
+                  ? 'bg-red-50 text-red-600'
+                  : 'bg-gray-50 text-gray-500'
+              }`}
+            >
+              {formatChange(diff)}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="card p-6">
@@ -263,48 +336,46 @@ function DetailedBreakdown({ metrics, showAll }: { metrics: BenefitMetric[]; sho
               {category.label}
             </h4>
             <div className="space-y-1">
-              {category.items.map((item) => {
-                const diff = item.after - item.before;
-                const isTax = item.category === 'tax';
-                const isPositive = isTax ? diff < 0 : diff > 0;
-                const isNegative = isTax ? diff > 0 : diff < 0;
-
-                return (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="text-sm text-gray-700">{item.label}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-gray-400">
-                        {formatCurrency(item.before)}
-                      </span>
-                      <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-900">
-                        {formatCurrency(item.after)}
-                      </span>
-                      {diff !== 0 && (
-                        <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            isPositive
-                              ? 'bg-green-50 text-green-600'
-                              : isNegative
-                              ? 'bg-red-50 text-red-600'
-                              : 'bg-gray-50 text-gray-500'
-                          }`}
-                        >
-                          {formatChange(diff)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {category.items.map(renderItem)}
             </div>
           </div>
         ))}
+
+        {/* Collapsible section for programs with $0 values */}
+        {nonEmptyZeroCategories.length > 0 && (
+          <div className="pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setShowZeroPrograms(!showZeroPrograms)}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <svg
+                className={`w-4 h-4 transition-transform ${showZeroPrograms ? 'rotate-90' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              {showZeroPrograms ? 'Hide' : 'Show'} programs you don&apos;t currently qualify for
+              <span className="text-gray-400">({zeroMetrics.length})</span>
+            </button>
+
+            {showZeroPrograms && (
+              <div className="mt-4 space-y-6">
+                {nonEmptyZeroCategories.map(([key, category]) => (
+                  <div key={key}>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                      {category.label}
+                    </h4>
+                    <div className="space-y-1 opacity-60">
+                      {category.items.map(renderItem)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
