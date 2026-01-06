@@ -5,7 +5,12 @@ const BACKEND_URL = process.env.BACKEND_URL;
 
 // Proxy to real Python backend if configured
 async function callRealBackend(body: unknown): Promise<SimulationResult> {
-  const response = await fetch(`${BACKEND_URL}/api/simulate`, {
+  // Modal URLs are the endpoint directly, Cloud Run needs /api/simulate suffix
+  const url = BACKEND_URL?.includes('modal.run')
+    ? BACKEND_URL
+    : `${BACKEND_URL}/api/simulate`;
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
