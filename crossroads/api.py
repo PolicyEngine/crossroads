@@ -65,6 +65,7 @@ def create_event_from_request(event_type: str, params: dict, household: Househol
         "getting_married": lambda: Marriage(
             spouse_age=params.get("spouseAge", 30),
             spouse_employment_income=params.get("spouseIncome", 0),
+            spouse_children=[Person(age=age) for age in params.get("spouseChildAges", [])],
         ),
         "changing_income": lambda: JobChange(
             new_income=household.members[0].employment_income

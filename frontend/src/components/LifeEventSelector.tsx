@@ -83,8 +83,8 @@ export default function LifeEventSelector({
 
               <div>
                 <label className="label">Spouse&apos;s Annual Income</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+                <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
+                  <span className="currency-prefix">$</span>
                   <input
                     type="number"
                     min="0"
@@ -93,24 +93,73 @@ export default function LifeEventSelector({
                     onChange={(e) => handleParamChange('spouseIncome', e.target.value)}
                     onBlur={(e) => handleParamBlur('spouseIncome', e.target.value, 0)}
                     disabled={disabled}
-                    className="input-field pl-10"
+                    className="currency-field"
                   />
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="label">Spouse&apos;s Children (from prior relationship)</label>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                value={(eventParams.spouseChildren as number) || 0}
-                onChange={(e) => handleParamChange('spouseChildren', e.target.value)}
-                onBlur={(e) => handleParamBlur('spouseChildren', e.target.value, 0, 0, 10)}
-                disabled={disabled}
-                className="input-field"
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="label mb-0">Spouse&apos;s Children</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentAges = (eventParams.spouseChildAges as number[]) || [];
+                    if (currentAges.length < 10) {
+                      onParamsChange({ ...eventParams, spouseChildAges: [...currentAges, 10] });
+                    }
+                  }}
+                  disabled={disabled || ((eventParams.spouseChildAges as number[])?.length || 0) >= 10}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#2C7A7B] bg-[#E6FFFA] hover:bg-[#B2F5EA] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+              {((eventParams.spouseChildAges as number[])?.length || 0) === 0 ? (
+                <p className="text-xs text-gray-500">No children from prior relationship</p>
+              ) : (
+                <div className="space-y-2">
+                  {((eventParams.spouseChildAges as number[]) || []).map((age, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-[#F9FAFB] rounded-lg">
+                      <span className="text-xs font-medium text-gray-500 w-14">Child {index + 1}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="17"
+                        value={age}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val)) {
+                            const newAges = [...((eventParams.spouseChildAges as number[]) || [])];
+                            newAges[index] = Math.min(17, Math.max(0, val));
+                            onParamsChange({ ...eventParams, spouseChildAges: newAges });
+                          }
+                        }}
+                        disabled={disabled}
+                        className="input-field flex-1 !py-1.5 text-sm"
+                      />
+                      <span className="text-xs text-gray-500">yrs</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newAges = ((eventParams.spouseChildAges as number[]) || []).filter((_, i) => i !== index);
+                          onParamsChange({ ...eventParams, spouseChildAges: newAges });
+                        }}
+                        disabled={disabled}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50 rounded transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -179,8 +228,8 @@ export default function LifeEventSelector({
         return (
           <div className="mt-4 pt-4 border-t border-gray-100">
             <label className="label">New Annual Income</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+            <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
+              <span className="currency-prefix">$</span>
               <input
                 type="number"
                 min="0"
@@ -189,7 +238,7 @@ export default function LifeEventSelector({
                 onChange={(e) => handleParamChange('newIncome', e.target.value)}
                 onBlur={(e) => handleParamBlur('newIncome', e.target.value, Math.round(household.income * 1.2))}
                 disabled={disabled}
-                className="input-field pl-10"
+                className="currency-field"
               />
             </div>
             <p className="mt-1.5 text-xs text-gray-500">

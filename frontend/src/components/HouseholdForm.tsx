@@ -142,8 +142,8 @@ export default function HouseholdForm({
             <label htmlFor="income" className="label">
               Annual Income
             </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+            <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
+              <span className="currency-prefix">$</span>
               <input
                 id="income"
                 type="number"
@@ -153,7 +153,7 @@ export default function HouseholdForm({
                 onChange={(e) => handleNumberChange('income', e.target.value)}
                 onBlur={(e) => handleNumberBlur('income', e.target.value, 0)}
                 disabled={disabled}
-                className="input-field pl-10"
+                className="currency-field"
               />
             </div>
           </div>
@@ -204,8 +204,8 @@ export default function HouseholdForm({
                   <label htmlFor="spouseIncome" className="label">
                     Spouse&apos;s Annual Income
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A5A5A] text-sm font-medium pointer-events-none">$</span>
+                  <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
+                    <span className="currency-prefix">$</span>
                     <input
                       id="spouseIncome"
                       type="number"
@@ -215,7 +215,7 @@ export default function HouseholdForm({
                       onChange={(e) => handleNumberChange('spouseIncome', e.target.value)}
                       onBlur={(e) => handleNumberBlur('spouseIncome', e.target.value, 0)}
                       disabled={disabled}
-                      className="input-field pl-10"
+                      className="currency-field"
                     />
                   </div>
                 </div>

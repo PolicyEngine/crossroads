@@ -187,6 +187,90 @@ select {
   cursor: not-allowed;
 }
 
+/* Hide number input spinners */
+.input-field[type="number"]::-webkit-outer-spin-button,
+.input-field[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-field[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Currency input wrapper */
+.currency-input {
+  display: flex;
+  align-items: stretch;
+  background: var(--pe-bg-primary);
+  border: 1.5px solid var(--pe-border-light);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.currency-input:hover {
+  border-color: var(--pe-border-medium);
+}
+
+.currency-input:focus-within {
+  border-color: var(--pe-primary-500);
+  box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.12);
+}
+
+.currency-input.disabled {
+  background: var(--pe-gray-50);
+}
+
+.currency-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  background: var(--pe-gray-50);
+  border-right: 1px solid var(--pe-border-light);
+  color: var(--pe-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  user-select: none;
+}
+
+.currency-input.disabled .currency-prefix {
+  color: var(--pe-text-tertiary);
+}
+
+.currency-field {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--pe-text-primary);
+  min-width: 0;
+}
+
+.currency-field:focus {
+  outline: none;
+}
+
+.currency-field::placeholder {
+  color: var(--pe-text-tertiary);
+}
+
+.currency-field:disabled {
+  color: var(--pe-text-tertiary);
+  cursor: not-allowed;
+}
+
+.currency-field::-webkit-outer-spin-button,
+.currency-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.currency-field {
+  -moz-appearance: textfield;
+}
+
 /* Select styles */
 .select-field {
   width: 100%;
