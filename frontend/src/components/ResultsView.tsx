@@ -97,17 +97,23 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
     );
   }
 
+  // Truncate long labels for chart display
+  const truncateLabel = (label: string, maxLength: number = 18) => {
+    if (label.length <= maxLength) return label;
+    return label.substring(0, maxLength - 1) + '…';
+  };
+
   return (
     <div className="card p-6">
       <h3 className="text-base font-semibold text-gray-900 mb-4">
         Before vs After
       </h3>
-      <div className="h-72">
+      <div style={{ height: Math.max(280, chartData.length * 40) }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 5, right: 20, left: 90, bottom: 5 }}
+            margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis
@@ -119,9 +125,10 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
             <YAxis
               type="category"
               dataKey="name"
-              width={85}
-              tick={{ fontSize: 12, fill: '#374151' }}
+              width={130}
+              tick={{ fontSize: 11, fill: '#374151' }}
               axisLine={{ stroke: '#e5e7eb' }}
+              tickFormatter={(value) => truncateLabel(value)}
             />
             <Tooltip
               formatter={(value) => formatCurrency(Math.abs(value as number))}
@@ -164,6 +171,12 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
     return entry.change > 0 ? '#22c55e' : '#ef4444';
   };
 
+  // Truncate long labels for chart display
+  const truncateLabel = (label: string, maxLength: number = 18) => {
+    if (label.length <= maxLength) return label;
+    return label.substring(0, maxLength - 1) + '…';
+  };
+
   if (chartData.length === 0) {
     return (
       <div className="card p-6">
@@ -180,12 +193,12 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
       <h3 className="text-base font-semibold text-gray-900 mb-4">
         What Changed
       </h3>
-      <div className="h-56">
+      <div style={{ height: Math.max(224, chartData.length * 40) }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 5, right: 20, left: 90, bottom: 5 }}
+            margin={{ top: 5, right: 20, left: 20, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis
@@ -200,9 +213,10 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
             <YAxis
               type="category"
               dataKey="name"
-              width={85}
-              tick={{ fontSize: 12, fill: '#374151' }}
+              width={130}
+              tick={{ fontSize: 11, fill: '#374151' }}
               axisLine={{ stroke: '#e5e7eb' }}
+              tickFormatter={(value) => truncateLabel(value)}
             />
             <Tooltip
               formatter={(value) => formatChange(value as number)}
