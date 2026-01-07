@@ -40,6 +40,10 @@ export default function HouseholdForm({
     updateField('childAges', newAges);
   };
 
+  // Track child age editing separately (field name + index)
+  const [editingChildIndex, setEditingChildIndex] = useState<number | null>(null);
+  const [editingChildValue, setEditingChildValue] = useState<string>('');
+
   // Track which field is being edited (to allow empty during typing)
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
@@ -283,12 +287,27 @@ export default function HouseholdForm({
                     type="number"
                     min="0"
                     max="17"
-                    value={age}
+                    value={editingChildIndex === index ? editingChildValue : age}
                     onChange={(e) => {
+                      setEditingChildValue(e.target.value);
                       const val = parseInt(e.target.value);
                       if (!isNaN(val)) {
                         updateChildAge(index, val);
                       }
+                    }}
+                    onFocus={() => {
+                      setEditingChildIndex(index);
+                      setEditingChildValue(String(age));
+                    }}
+                    onBlur={() => {
+                      const parsed = parseInt(editingChildValue);
+                      if (isNaN(parsed) || editingChildValue === '') {
+                        updateChildAge(index, 0);
+                      } else {
+                        updateChildAge(index, parsed);
+                      }
+                      setEditingChildIndex(null);
+                      setEditingChildValue('');
                     }}
                     disabled={disabled}
                     className="input-field flex-1 !py-2"

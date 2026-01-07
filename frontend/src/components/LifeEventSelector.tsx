@@ -24,6 +24,10 @@ export default function LifeEventSelector({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
 
+  // Track spouse child age editing separately
+  const [editingChildIndex, setEditingChildIndex] = useState<number | null>(null);
+  const [editingChildValue, setEditingChildValue] = useState<string>('');
+
   // Handle number input - allow empty during typing
   const handleParamChange = (key: string, value: string) => {
     setEditingValue(value);
@@ -149,14 +153,31 @@ export default function LifeEventSelector({
                         type="number"
                         min="0"
                         max="17"
-                        value={age}
+                        value={editingChildIndex === index ? editingChildValue : age}
                         onChange={(e) => {
+                          setEditingChildValue(e.target.value);
                           const val = parseInt(e.target.value);
                           if (!isNaN(val)) {
                             const newAges = [...((eventParams.spouseChildAges as number[]) || [])];
                             newAges[index] = Math.min(17, Math.max(0, val));
                             onParamsChange({ ...eventParams, spouseChildAges: newAges });
                           }
+                        }}
+                        onFocus={() => {
+                          setEditingChildIndex(index);
+                          setEditingChildValue(String(age));
+                        }}
+                        onBlur={() => {
+                          const parsed = parseInt(editingChildValue);
+                          const newAges = [...((eventParams.spouseChildAges as number[]) || [])];
+                          if (isNaN(parsed) || editingChildValue === '') {
+                            newAges[index] = 0;
+                          } else {
+                            newAges[index] = Math.min(17, Math.max(0, parsed));
+                          }
+                          onParamsChange({ ...eventParams, spouseChildAges: newAges });
+                          setEditingChildIndex(null);
+                          setEditingChildValue('');
                         }}
                         disabled={disabled}
                         className="input-field flex-1 !py-1.5 text-sm"
