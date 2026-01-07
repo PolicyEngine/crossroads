@@ -129,7 +129,7 @@ def simulate(data: dict) -> dict:
             if get_category(name) in ("benefit", "credit")
         )
 
-        return {
+        response = {
             "before": {
                 "netIncome": result.net_income_before,
                 "totalTax": total_tax_before,
@@ -152,6 +152,14 @@ def simulate(data: dict) -> dict:
                 "description": result.event.description,
             },
         }
+
+        # Add healthcare coverage info if available
+        if result.healthcare_before:
+            response["healthcareBefore"] = result.healthcare_before.to_dict()
+        if result.healthcare_after:
+            response["healthcareAfter"] = result.healthcare_after.to_dict()
+
+        return response
 
     try:
         household = create_household_from_request(data.get("household", {}))

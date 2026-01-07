@@ -124,6 +124,67 @@ OUTPUT_VARIABLES = [
 
 
 @dataclass
+class PersonHealthcare:
+    """Healthcare coverage info for a single person."""
+
+    person_index: int
+    label: str  # "You", "Spouse", "Child 1", etc.
+    medicaid: bool = False
+    chip: bool = False
+    marketplace: bool = False  # ACA marketplace (inferred from PTC)
+
+    @property
+    def coverage_type(self) -> str | None:
+        """Return the primary coverage type for this person."""
+        if self.medicaid:
+            return "Medicaid"
+        if self.chip:
+            return "CHIP"
+        if self.marketplace:
+            return "Marketplace"
+        return None
+
+
+@dataclass
+class HealthcareCoverage:
+    """Healthcare coverage breakdown for the household."""
+
+    people: list[PersonHealthcare]
+    has_ptc: bool = False  # Whether household receives Premium Tax Credit
+
+    def get_coverage_summary(self) -> dict[str, list[str]]:
+        """Return dict mapping coverage type to list of person labels."""
+        summary: dict[str, list[str]] = {
+            "Medicaid": [],
+            "CHIP": [],
+            "Marketplace": [],
+        }
+        for p in self.people:
+            if p.medicaid:
+                summary["Medicaid"].append(p.label)
+            elif p.chip:
+                summary["CHIP"].append(p.label)
+            elif p.marketplace:
+                summary["Marketplace"].append(p.label)
+        return {k: v for k, v in summary.items() if v}
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to JSON-serializable dictionary."""
+        return {
+            "people": [
+                {
+                    "index": p.person_index,
+                    "label": p.label,
+                    "coverage": p.coverage_type,
+                }
+                for p in self.people
+            ],
+            "summary": self.get_coverage_summary(),
+            "has_ptc": self.has_ptc,
+        }
+
+
+@dataclass
 class BenefitChange:
     """Represents a change in a specific benefit or tax."""
 
@@ -169,6 +230,8 @@ class ComparisonResult:
     before_situation: dict[str, Any]
     after_situation: dict[str, Any]
     changes: dict[str, BenefitChange] = field(default_factory=dict)
+    healthcare_before: HealthcareCoverage | None = None
+    healthcare_after: HealthcareCoverage | None = None
 
     @property
     def net_income_before(self) -> float:
@@ -274,7 +337,7 @@ class ComparisonResult:
         Returns a dictionary with computed properties included for
         frontend consumption.
         """
-        return {
+        result = {
             "event": {
                 "name": self.event.name,
                 "description": self.event.description,
@@ -298,10 +361,19 @@ class ComparisonResult:
                 "lost_benefits": self.lost_benefits,
             },
         }
+        if self.healthcare_before:
+            result["healthcare_before"] = self.healthcare_before.to_dict()
+        if self.healthcare_after:
+            result["healthcare_after"] = self.healthcare_after.to_dict()
+        return result
 
 
-def _run_simulation(situation: dict[str, Any], year: int) -> dict[str, float]:
-    """Run a PolicyEngine simulation and extract key outputs."""
+def _run_simulation(situation: dict[str, Any], year: int) -> tuple[dict[str, float], Simulation]:
+    """Run a PolicyEngine simulation and extract key outputs.
+
+    Returns both the aggregated results and the simulation object for
+    further per-person analysis.
+    """
     sim = Simulation(situation=situation)
     results = {}
 
@@ -316,7 +388,78 @@ def _run_simulation(situation: dict[str, Any], year: int) -> dict[str, float]:
         except Exception:
             results[var] = 0.0
 
-    return results
+    return results, sim
+
+
+def _get_person_label(index: int, household: Household) -> str:
+    """Get a human-readable label for a person by index."""
+    if index >= len(household.members):
+        return f"Person {index + 1}"
+
+    member = household.members[index]
+    if member.is_tax_unit_head:
+        return "You"
+    if member.is_tax_unit_spouse:
+        return "Spouse"
+
+    # Count children to get child number
+    child_num = 0
+    for i, m in enumerate(household.members):
+        if not m.is_tax_unit_head and not m.is_tax_unit_spouse:
+            child_num += 1
+            if i == index:
+                return f"Child {child_num}"
+
+    return f"Person {index + 1}"
+
+
+def _extract_healthcare_coverage(
+    sim: Simulation,
+    household: Household,
+    year: int,
+) -> HealthcareCoverage:
+    """Extract per-person healthcare coverage from a simulation."""
+    num_people = len(household.members)
+
+    # Get per-person healthcare values
+    try:
+        medicaid_values = sim.calculate("medicaid", year)
+    except Exception:
+        medicaid_values = [0.0] * num_people
+
+    try:
+        chip_values = sim.calculate("chip", year)
+    except Exception:
+        chip_values = [0.0] * num_people
+
+    # Get household-level PTC
+    try:
+        ptc_value = float(sum(sim.calculate("premium_tax_credit", year)))
+    except Exception:
+        ptc_value = 0.0
+
+    has_ptc = ptc_value > 0
+
+    # Build per-person coverage
+    people = []
+    for i in range(num_people):
+        medicaid_amount = float(medicaid_values[i]) if i < len(medicaid_values) else 0.0
+        chip_amount = float(chip_values[i]) if i < len(chip_values) else 0.0
+
+        on_medicaid = medicaid_amount > 0
+        on_chip = chip_amount > 0
+        # If not on Medicaid/CHIP but household has PTC, person is on marketplace
+        on_marketplace = has_ptc and not on_medicaid and not on_chip
+
+        people.append(PersonHealthcare(
+            person_index=i,
+            label=_get_person_label(i, household),
+            medicaid=on_medicaid,
+            chip=on_chip,
+            marketplace=on_marketplace,
+        ))
+
+    return HealthcareCoverage(people=people, has_ptc=has_ptc)
 
 
 def compare(
@@ -350,8 +493,12 @@ def compare(
     after_situation = after_household.to_situation()
 
     # Run simulations
-    before_results = _run_simulation(before_situation, household.year)
-    after_results = _run_simulation(after_situation, after_household.year)
+    before_results, before_sim = _run_simulation(before_situation, household.year)
+    after_results, after_sim = _run_simulation(after_situation, after_household.year)
+
+    # Extract healthcare coverage
+    healthcare_before = _extract_healthcare_coverage(before_sim, household, household.year)
+    healthcare_after = _extract_healthcare_coverage(after_sim, after_household, after_household.year)
 
     # Build changes dictionary
     vars_to_compare = variables or OUTPUT_VARIABLES
@@ -370,4 +517,6 @@ def compare(
         before_situation=before_situation,
         after_situation=after_situation,
         changes=changes,
+        healthcare_before=healthcare_before,
+        healthcare_after=healthcare_after,
     )

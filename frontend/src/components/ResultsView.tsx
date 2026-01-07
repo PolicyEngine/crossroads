@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SimulationResult, BenefitMetric } from '@/types';
+import { SimulationResult, BenefitMetric, HealthcareCoverage } from '@/types';
 import {
   BarChart,
   Bar,
@@ -72,6 +72,106 @@ function SummaryCard({ title, before, after, inverse = false, icon }: SummaryCar
       <p className="mt-1.5 text-sm text-gray-400">
         was {formatCurrency(before)}
       </p>
+    </div>
+  );
+}
+
+function HealthcareCoverageCard({
+  before,
+  after,
+}: {
+  before?: HealthcareCoverage;
+  after?: HealthcareCoverage;
+}) {
+  if (!before && !after) return null;
+
+  const coverageTypes = ['Medicaid', 'CHIP', 'Marketplace'] as const;
+  const hasAnyChange = coverageTypes.some((type) => {
+    const beforePeople = before?.summary[type] || [];
+    const afterPeople = after?.summary[type] || [];
+    return JSON.stringify(beforePeople.sort()) !== JSON.stringify(afterPeople.sort());
+  });
+
+  // Check if anyone has any coverage
+  const hasCoverage = coverageTypes.some(
+    (type) => (before?.summary[type]?.length || 0) > 0 || (after?.summary[type]?.length || 0) > 0
+  );
+
+  if (!hasCoverage) return null;
+
+  const getCoverageIcon = (type: string) => {
+    switch (type) {
+      case 'Medicaid':
+        return '🏥';
+      case 'CHIP':
+        return '👶';
+      case 'Marketplace':
+        return '🛒';
+      default:
+        return '❤️';
+    }
+  };
+
+  return (
+    <div className="card p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-sm font-medium text-gray-900">Healthcare Coverage</h3>
+          {hasAnyChange && (
+            <p className="text-xs text-amber-600">Coverage changed</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {coverageTypes.map((type) => {
+          const beforePeople = before?.summary[type] || [];
+          const afterPeople = after?.summary[type] || [];
+
+          if (beforePeople.length === 0 && afterPeople.length === 0) return null;
+
+          const changed = JSON.stringify(beforePeople.sort()) !== JSON.stringify(afterPeople.sort());
+
+          return (
+            <div key={type} className="flex items-start gap-3">
+              <span className="text-lg">{getCoverageIcon(type)}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-700">{type}</p>
+                <div className="flex items-center gap-2 text-xs">
+                  {beforePeople.length > 0 && (
+                    <span className={changed ? 'text-gray-400 line-through' : 'text-gray-600'}>
+                      {beforePeople.join(', ')}
+                    </span>
+                  )}
+                  {changed && afterPeople.length > 0 && (
+                    <>
+                      <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span className="text-green-600 font-medium">
+                        {afterPeople.join(', ')}
+                      </span>
+                    </>
+                  )}
+                  {changed && afterPeople.length === 0 && (
+                    <>
+                      <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span className="text-red-500 font-medium">None</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -442,6 +542,12 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
           }
         />
       </div>
+
+      {/* Healthcare Coverage */}
+      <HealthcareCoverageCard
+        before={result.healthcareBefore}
+        after={result.healthcareAfter}
+      />
 
       {/* View Toggle */}
       <div className="flex justify-center">

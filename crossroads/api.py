@@ -119,7 +119,7 @@ def format_result_for_frontend(result) -> dict:
         if get_category(name) in ("benefit", "credit")
     )
 
-    return {
+    response = {
         "before": {
             "netIncome": result.net_income_before,
             "totalTax": total_tax_before,
@@ -142,6 +142,14 @@ def format_result_for_frontend(result) -> dict:
             "description": result.event.description,
         },
     }
+
+    # Add healthcare coverage info if available
+    if result.healthcare_before:
+        response["healthcareBefore"] = result.healthcare_before.to_dict()
+    if result.healthcare_after:
+        response["healthcareAfter"] = result.healthcare_after.to_dict()
+
+    return response
 
 
 @app.route("/api/simulate", methods=["POST"])

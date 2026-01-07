@@ -35,6 +35,18 @@ export interface BenefitMetric {
   priority: 1 | 2; // 1 = primary (always shown), 2 = secondary (in "More" tab)
 }
 
+export interface PersonHealthcare {
+  index: number;
+  label: string; // "You", "Spouse", "Child 1", etc.
+  coverage: 'Medicaid' | 'CHIP' | 'Marketplace' | null;
+}
+
+export interface HealthcareCoverage {
+  people: PersonHealthcare[];
+  summary: Record<string, string[]>; // e.g., { "Medicaid": ["You", "Child 1"], "CHIP": ["Child 2"] }
+  has_ptc: boolean;
+}
+
 export interface SimulationResult {
   before: {
     netIncome: number;
@@ -53,6 +65,8 @@ export interface SimulationResult {
     totalTax: number;
     totalBenefits: number;
   };
+  healthcareBefore?: HealthcareCoverage;
+  healthcareAfter?: HealthcareCoverage;
 }
 
 export const LIFE_EVENTS: LifeEvent[] = [
