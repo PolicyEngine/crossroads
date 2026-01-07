@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Household, US_STATES } from '@/types';
 
 interface HouseholdFormProps {
@@ -39,32 +40,42 @@ export default function HouseholdForm({
     updateField('childAges', newAges);
   };
 
-  // Handle number input - only update if valid number, allow empty during typing
+  // Track which field is being edited (to allow empty during typing)
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
+
+  // Handle number input - allow empty during typing
   const handleNumberChange = (
     field: 'income' | 'spouseIncome' | 'age' | 'spouseAge',
     value: string,
   ) => {
+    setEditingValue(value);
     const parsed = parseInt(value);
-    // Only update state if it's a valid number - allow empty field during typing
     if (!isNaN(parsed)) {
       updateField(field, parsed);
     }
   };
 
+  const handleNumberFocus = (field: string, currentValue: number) => {
+    setEditingField(field);
+    setEditingValue(String(currentValue));
+  };
+
   // Validate and clamp on blur
   const handleNumberBlur = (
     field: 'income' | 'spouseIncome' | 'age' | 'spouseAge',
-    value: string,
     min: number,
     max?: number
   ) => {
-    const parsed = parseInt(value);
-    if (isNaN(parsed) || value === '') {
+    const parsed = parseInt(editingValue);
+    if (isNaN(parsed) || editingValue === '') {
       updateField(field, min);
     } else {
       const clamped = max !== undefined ? Math.min(max, Math.max(min, parsed)) : Math.max(min, parsed);
       updateField(field, clamped);
     }
+    setEditingField(null);
+    setEditingValue('');
   };
 
   return (
@@ -130,9 +141,10 @@ export default function HouseholdForm({
               type="number"
               min="18"
               max="100"
-              value={household.age}
+              value={editingField === 'age' ? editingValue : household.age}
               onChange={(e) => handleNumberChange('age', e.target.value)}
-              onBlur={(e) => handleNumberBlur('age', e.target.value, 18, 100)}
+              onFocus={() => handleNumberFocus('age', household.age)}
+              onBlur={() => handleNumberBlur('age', 18, 100)}
               disabled={disabled}
               className="input-field"
             />
@@ -149,9 +161,10 @@ export default function HouseholdForm({
                 type="number"
                 min="0"
                 step="1000"
-                value={household.income}
+                value={editingField === 'income' ? editingValue : household.income}
                 onChange={(e) => handleNumberChange('income', e.target.value)}
-                onBlur={(e) => handleNumberBlur('income', e.target.value, 0)}
+                onFocus={() => handleNumberFocus('income', household.income)}
+                onBlur={() => handleNumberBlur('income', 0)}
                 disabled={disabled}
                 className="currency-field"
               />
@@ -192,9 +205,10 @@ export default function HouseholdForm({
                     type="number"
                     min="18"
                     max="100"
-                    value={household.spouseAge}
+                    value={editingField === 'spouseAge' ? editingValue : household.spouseAge}
                     onChange={(e) => handleNumberChange('spouseAge', e.target.value)}
-                    onBlur={(e) => handleNumberBlur('spouseAge', e.target.value, 18, 100)}
+                    onFocus={() => handleNumberFocus('spouseAge', household.spouseAge)}
+                    onBlur={() => handleNumberBlur('spouseAge', 18, 100)}
                     disabled={disabled}
                     className="input-field"
                   />
@@ -211,9 +225,10 @@ export default function HouseholdForm({
                       type="number"
                       min="0"
                       step="1000"
-                      value={household.spouseIncome}
+                      value={editingField === 'spouseIncome' ? editingValue : household.spouseIncome}
                       onChange={(e) => handleNumberChange('spouseIncome', e.target.value)}
-                      onBlur={(e) => handleNumberBlur('spouseIncome', e.target.value, 0)}
+                      onFocus={() => handleNumberFocus('spouseIncome', household.spouseIncome)}
+                      onBlur={() => handleNumberBlur('spouseIncome', 0)}
                       disabled={disabled}
                       className="currency-field"
                     />

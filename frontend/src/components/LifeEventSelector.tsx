@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { LifeEvent, LifeEventType, LIFE_EVENTS, US_STATES, Household } from '@/types';
 
 interface LifeEventSelectorProps {
@@ -19,23 +20,39 @@ export default function LifeEventSelector({
   household,
   disabled = false,
 }: LifeEventSelectorProps) {
-  // Handle number input - only update if valid, allow empty during typing
+  // Track which field is being edited (to allow empty during typing)
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
+
+  // Handle number input - allow empty during typing
   const handleParamChange = (key: string, value: string) => {
+    setEditingValue(value);
     const parsed = parseInt(value);
     if (!isNaN(parsed)) {
       onParamsChange({ ...eventParams, [key]: parsed });
     }
   };
 
+  const handleParamFocus = (key: string, currentValue: number) => {
+    setEditingField(key);
+    setEditingValue(String(currentValue));
+  };
+
   // Validate and set default on blur
-  const handleParamBlur = (key: string, value: string, defaultVal: number, min = 0, max?: number) => {
-    const parsed = parseInt(value);
-    if (isNaN(parsed) || value === '') {
+  const handleParamBlur = (key: string, defaultVal: number, min = 0, max?: number) => {
+    const parsed = parseInt(editingValue);
+    if (isNaN(parsed) || editingValue === '') {
       onParamsChange({ ...eventParams, [key]: defaultVal });
     } else {
       const clamped = max !== undefined ? Math.min(max, Math.max(min, parsed)) : Math.max(min, parsed);
       onParamsChange({ ...eventParams, [key]: clamped });
     }
+    setEditingField(null);
+    setEditingValue('');
+  };
+
+  const getInputValue = (key: string, fallback: number) => {
+    return editingField === key ? editingValue : (eventParams[key] as number) ?? fallback;
   };
 
   const renderEventParams = (event: LifeEvent) => {
@@ -73,9 +90,10 @@ export default function LifeEventSelector({
                   type="number"
                   min="18"
                   max="100"
-                  value={(eventParams.spouseAge as number) || 30}
+                  value={getInputValue('spouseAge', 30)}
                   onChange={(e) => handleParamChange('spouseAge', e.target.value)}
-                  onBlur={(e) => handleParamBlur('spouseAge', e.target.value, 30, 18, 100)}
+                  onFocus={() => handleParamFocus('spouseAge', (eventParams.spouseAge as number) || 30)}
+                  onBlur={() => handleParamBlur('spouseAge', 30, 18, 100)}
                   disabled={disabled}
                   className="input-field"
                 />
@@ -89,9 +107,10 @@ export default function LifeEventSelector({
                     type="number"
                     min="0"
                     step="1000"
-                    value={(eventParams.spouseIncome as number) || 0}
+                    value={getInputValue('spouseIncome', 0)}
                     onChange={(e) => handleParamChange('spouseIncome', e.target.value)}
-                    onBlur={(e) => handleParamBlur('spouseIncome', e.target.value, 0)}
+                    onFocus={() => handleParamFocus('spouseIncome', (eventParams.spouseIncome as number) || 0)}
+                    onBlur={() => handleParamBlur('spouseIncome', 0)}
                     disabled={disabled}
                     className="currency-field"
                   />
@@ -189,9 +208,10 @@ export default function LifeEventSelector({
                   type="number"
                   min="0"
                   max={household.childAges.length}
-                  value={(eventParams.childrenKeeping as number) ?? household.childAges.length}
+                  value={getInputValue('childrenKeeping', household.childAges.length)}
                   onChange={(e) => handleParamChange('childrenKeeping', e.target.value)}
-                  onBlur={(e) => handleParamBlur('childrenKeeping', e.target.value, household.childAges.length, 0, household.childAges.length)}
+                  onFocus={() => handleParamFocus('childrenKeeping', (eventParams.childrenKeeping as number) ?? household.childAges.length)}
+                  onBlur={() => handleParamBlur('childrenKeeping', household.childAges.length, 0, household.childAges.length)}
                   disabled={disabled}
                   className="input-field"
                 />
@@ -234,9 +254,10 @@ export default function LifeEventSelector({
                 type="number"
                 min="0"
                 step="1000"
-                value={(eventParams.newIncome as number) ?? Math.round(household.income * 1.2)}
+                value={getInputValue('newIncome', Math.round(household.income * 1.2))}
                 onChange={(e) => handleParamChange('newIncome', e.target.value)}
-                onBlur={(e) => handleParamBlur('newIncome', e.target.value, Math.round(household.income * 1.2))}
+                onFocus={() => handleParamFocus('newIncome', (eventParams.newIncome as number) ?? Math.round(household.income * 1.2))}
+                onBlur={() => handleParamBlur('newIncome', Math.round(household.income * 1.2))}
                 disabled={disabled}
                 className="currency-field"
               />
