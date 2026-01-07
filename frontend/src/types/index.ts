@@ -38,7 +38,7 @@ export interface BenefitMetric {
 export interface PersonHealthcare {
   index: number;
   label: string; // "You", "Spouse", "Child 1", etc.
-  coverage: 'Medicaid' | 'CHIP' | 'Marketplace' | null;
+  coverage: 'ESI' | 'Medicaid' | 'CHIP' | 'Marketplace' | null;
 }
 
 export interface HealthcareCoverage {

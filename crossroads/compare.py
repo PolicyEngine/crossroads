@@ -132,10 +132,13 @@ class PersonHealthcare:
     medicaid: bool = False
     chip: bool = False
     marketplace: bool = False  # ACA marketplace (inferred from PTC)
+    esi: bool = False  # Employer-sponsored insurance
 
     @property
     def coverage_type(self) -> str | None:
         """Return the primary coverage type for this person."""
+        if self.esi:
+            return "ESI"
         if self.medicaid:
             return "Medicaid"
         if self.chip:
@@ -155,12 +158,15 @@ class HealthcareCoverage:
     def get_coverage_summary(self) -> dict[str, list[str]]:
         """Return dict mapping coverage type to list of person labels."""
         summary: dict[str, list[str]] = {
+            "ESI": [],
             "Medicaid": [],
             "CHIP": [],
             "Marketplace": [],
         }
         for p in self.people:
-            if p.medicaid:
+            if p.esi:
+                summary["ESI"].append(p.label)
+            elif p.medicaid:
                 summary["Medicaid"].append(p.label)
             elif p.chip:
                 summary["CHIP"].append(p.label)
@@ -443,17 +449,22 @@ def _extract_healthcare_coverage(
     # Build per-person coverage
     people = []
     for i in range(num_people):
+        member = household.members[i]
         medicaid_amount = float(medicaid_values[i]) if i < len(medicaid_values) else 0.0
         chip_amount = float(chip_values[i]) if i < len(chip_values) else 0.0
 
-        on_medicaid = medicaid_amount > 0
-        on_chip = chip_amount > 0
-        # If not on Medicaid/CHIP but household has PTC, person is on marketplace
-        on_marketplace = has_ptc and not on_medicaid and not on_chip
+        # Check ESI first (from household member data)
+        has_esi = member.has_esi
+
+        on_medicaid = medicaid_amount > 0 and not has_esi
+        on_chip = chip_amount > 0 and not has_esi
+        # If not on ESI/Medicaid/CHIP but household has PTC, person is on marketplace
+        on_marketplace = has_ptc and not has_esi and not on_medicaid and not on_chip
 
         people.append(PersonHealthcare(
             person_index=i,
             label=_get_person_label(i, household),
+            esi=has_esi,
             medicaid=on_medicaid,
             chip=on_chip,
             marketplace=on_marketplace,

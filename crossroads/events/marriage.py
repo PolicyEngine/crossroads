@@ -22,6 +22,7 @@ class Marriage(LifeEvent):
     spouse_employment_income: float = 0.0
     spouse_self_employment_income: float = 0.0
     spouse_children: list[Person] = field(default_factory=list)
+    spouse_has_esi: bool = False  # Spouse has employer-sponsored insurance
 
     @property
     def name(self) -> str:
@@ -40,6 +41,7 @@ class Marriage(LifeEvent):
             employment_income=self.spouse_employment_income,
             self_employment_income=self.spouse_self_employment_income,
             is_tax_unit_spouse=True,
+            has_esi=self.spouse_has_esi,
         )
         new_household.add_member(spouse)
 

@@ -19,6 +19,7 @@ class Person:
     is_pregnant: bool = False
     is_tax_unit_head: bool = False
     is_tax_unit_spouse: bool = False
+    has_esi: bool = False  # Has employer-sponsored health insurance
 
     def to_situation_dict(self, year: int) -> dict[str, Any]:
         """Convert to PolicyEngine situation format."""
@@ -31,6 +32,8 @@ class Person:
         }
         if self.is_pregnant:
             result["is_pregnant"] = {year: True}
+        if self.has_esi:
+            result["is_enrolled_in_esi"] = {year: True}
         return result
 
 

@@ -85,22 +85,19 @@ function HealthcareCoverageCard({
 }) {
   if (!before && !after) return null;
 
-  const coverageTypes = ['Medicaid', 'CHIP', 'Marketplace'] as const;
-  const hasAnyChange = coverageTypes.some((type) => {
-    const beforePeople = before?.summary[type] || [];
-    const afterPeople = after?.summary[type] || [];
-    return JSON.stringify(beforePeople.sort()) !== JSON.stringify(afterPeople.sort());
-  });
+  const coverageTypes = ['ESI', 'Medicaid', 'CHIP', 'Marketplace'] as const;
 
-  // Check if anyone has any coverage
+  // Check if anyone has any coverage after the event
   const hasCoverage = coverageTypes.some(
-    (type) => (before?.summary[type]?.length || 0) > 0 || (after?.summary[type]?.length || 0) > 0
+    (type) => (after?.summary[type]?.length || 0) > 0
   );
 
   if (!hasCoverage) return null;
 
   const getCoverageIcon = (type: string) => {
     switch (type) {
+      case 'ESI':
+        return '💼';
       case 'Medicaid':
         return '🏥';
       case 'CHIP':
@@ -112,6 +109,17 @@ function HealthcareCoverageCard({
     }
   };
 
+  const getCoverageLabel = (type: string) => {
+    switch (type) {
+      case 'ESI':
+        return 'Employer Insurance';
+      case 'Marketplace':
+        return 'ACA Marketplace';
+      default:
+        return type;
+    }
+  };
+
   return (
     <div className="card p-5">
       <div className="flex items-center gap-3 mb-4">
@@ -120,53 +128,36 @@ function HealthcareCoverageCard({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </div>
-        <div>
-          <h3 className="text-sm font-medium text-gray-900">Healthcare Coverage</h3>
-          {hasAnyChange && (
-            <p className="text-xs text-amber-600">Coverage changed</p>
-          )}
-        </div>
+        <h3 className="text-sm font-medium text-gray-900">Healthcare Coverage After Event</h3>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {coverageTypes.map((type) => {
-          const beforePeople = before?.summary[type] || [];
           const afterPeople = after?.summary[type] || [];
+          const beforePeople = before?.summary[type] || [];
 
-          if (beforePeople.length === 0 && afterPeople.length === 0) return null;
+          if (afterPeople.length === 0) return null;
 
-          const changed = JSON.stringify(beforePeople.sort()) !== JSON.stringify(afterPeople.sort());
+          // Find who was added to this coverage type
+          const added = afterPeople.filter(p => !beforePeople.includes(p));
 
           return (
-            <div key={type} className="flex items-start gap-3">
-              <span className="text-lg">{getCoverageIcon(type)}</span>
+            <div key={type} className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-gray-50">
+              <span className="text-base">{getCoverageIcon(type)}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700">{type}</p>
-                <div className="flex items-center gap-2 text-xs">
-                  {beforePeople.length > 0 && (
-                    <span className={changed ? 'text-gray-400 line-through' : 'text-gray-600'}>
-                      {beforePeople.join(', ')}
-                    </span>
-                  )}
-                  {changed && afterPeople.length > 0 && (
-                    <>
-                      <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                      <span className="text-green-600 font-medium">
-                        {afterPeople.join(', ')}
+                <span className="text-sm font-medium text-gray-700">{getCoverageLabel(type)}</span>
+                <span className="text-gray-400 mx-2">·</span>
+                <span className="text-sm text-gray-600">
+                  {afterPeople.map((person, i) => (
+                    <span key={person}>
+                      {i > 0 && ', '}
+                      <span className={added.includes(person) ? 'text-green-600 font-medium' : ''}>
+                        {person}
+                        {added.includes(person) && ' (new)'}
                       </span>
-                    </>
-                  )}
-                  {changed && afterPeople.length === 0 && (
-                    <>
-                      <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                      <span className="text-red-500 font-medium">None</span>
-                    </>
-                  )}
-                </div>
+                    </span>
+                  ))}
+                </span>
               </div>
             </div>
           );

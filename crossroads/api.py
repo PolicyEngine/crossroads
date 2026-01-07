@@ -33,6 +33,7 @@ def create_household_from_request(data: dict) -> Household:
         age=data.get("age", 30),
         employment_income=data.get("income", 0),
         is_tax_unit_head=True,
+        has_esi=data.get("hasESI", False),
     )
     members.append(head)
 
@@ -43,6 +44,7 @@ def create_household_from_request(data: dict) -> Household:
             age=data.get("spouseAge", data.get("age", 30)),
             employment_income=data.get("spouseIncome", 0),
             is_tax_unit_spouse=True,
+            has_esi=data.get("spouseHasESI", False),
         )
         members.append(spouse)
 
@@ -66,6 +68,7 @@ def create_event_from_request(event_type: str, params: dict, household: Househol
             spouse_age=params.get("spouseAge", 30),
             spouse_employment_income=params.get("spouseIncome", 0),
             spouse_children=[Person(age=age) for age in params.get("spouseChildAges", [])],
+            spouse_has_esi=params.get("spouseHasESI", False),
         ),
         "changing_income": lambda: JobChange(
             new_income=household.members[0].employment_income
