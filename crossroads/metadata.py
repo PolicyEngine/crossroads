@@ -35,8 +35,9 @@ VARIABLE_METADATA = {
     # Tax credits - primary
     "earned_income_tax_credit": ("Earned Income Tax Credit", "credit", 1),
     "ctc": ("Child Tax Credit", "credit", 1),
-    "non_refundable_ctc": ("CTC (reduces taxes)", "credit", 1),
-    "refundable_ctc": ("CTC (refundable)", "credit", 2),
+    # CTC components - hide by default to avoid double-counting with total
+    "non_refundable_ctc": ("CTC (non-refundable portion)", "credit", 2),
+    "refundable_ctc": ("CTC (refundable portion)", "credit", 2),
     "cdcc": ("Child & Dependent Care Credit", "credit", 1),
     "premium_tax_credit": ("Premium Tax Credit (ACA)", "credit", 1),
     # Tax credits - secondary

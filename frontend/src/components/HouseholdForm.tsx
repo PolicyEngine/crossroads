@@ -107,8 +107,8 @@ export default function HouseholdForm({
       </h2>
 
       <div className="space-y-6">
-        {/* State & Filing Status Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {/* State, Year & Filing Status Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
             <label htmlFor="state" className="label">
               State
@@ -125,6 +125,23 @@ export default function HouseholdForm({
                   {state.name}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="year" className="label">
+              Tax Year
+            </label>
+            <select
+              id="year"
+              value={household.year}
+              onChange={(e) => updateField('year', parseInt(e.target.value))}
+              disabled={disabled}
+              className="select-field"
+            >
+              <option value={2025}>2025</option>
+              <option value={2024}>2024</option>
+              <option value={2023}>2023</option>
             </select>
           </div>
 

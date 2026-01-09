@@ -118,7 +118,7 @@ def simulate(data: dict) -> dict:
         return Household(
             state=data.get("state", "CA"),
             members=members,
-            year=data.get("year", 2024),
+            year=data.get("year", 2025),
         )
 
     def create_event_from_request(event_type: str, params: dict, household: Household):

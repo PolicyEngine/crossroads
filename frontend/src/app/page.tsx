@@ -36,6 +36,7 @@ const DEFAULT_HOUSEHOLD: Household = {
   age: 30,
   hasESI: false,
   spouseHasESI: false,
+  year: 2025,
 };
 
 const STEPS = [
@@ -412,17 +413,15 @@ export default function Home() {
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Filing Status</span>
-                      <p className="font-medium text-gray-900 capitalize">
-                        {household.filingStatus.replace(/_/g, ' ')}
+                      <span className="text-gray-500">Tax Year</span>
+                      <p className="font-medium text-gray-900">
+                        {household.year}
                       </p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Income</span>
-                      <p className="font-medium text-gray-900">
-                        {selectedEvent === 'changing_income' && eventParams.newIncome
-                          ? `$${household.income.toLocaleString()} → $${(eventParams.newIncome as number).toLocaleString()}`
-                          : `$${household.income.toLocaleString()}`}
+                      <span className="text-gray-500">Filing Status</span>
+                      <p className="font-medium text-gray-900 capitalize">
+                        {household.filingStatus.replace(/_/g, ' ')}
                       </p>
                     </div>
                     <div>
@@ -431,6 +430,34 @@ export default function Home() {
                         {selectedEvent?.replace(/_/g, ' ')}
                       </p>
                     </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-[#319795]/10">
+                    <div>
+                      <span className="text-gray-500">Your Income</span>
+                      <p className="font-medium text-gray-900">
+                        {selectedEvent === 'changing_income' && eventParams.newIncome !== undefined
+                          ? `$${household.income.toLocaleString()} → $${(eventParams.newIncome as number).toLocaleString()}`
+                          : `$${household.income.toLocaleString()}`}
+                      </p>
+                    </div>
+                    {(household.filingStatus === 'married_jointly' || household.filingStatus === 'married_separately') && (
+                      <div>
+                        <span className="text-gray-500">Spouse Income</span>
+                        <p className="font-medium text-gray-900">
+                          {selectedEvent === 'changing_income' && eventParams.newSpouseIncome !== undefined
+                            ? `$${household.spouseIncome.toLocaleString()} → $${(eventParams.newSpouseIncome as number).toLocaleString()}`
+                            : `$${household.spouseIncome.toLocaleString()}`}
+                        </p>
+                      </div>
+                    )}
+                    {household.childAges.length > 0 && (
+                      <div>
+                        <span className="text-gray-500">Children</span>
+                        <p className="font-medium text-gray-900">
+                          {household.childAges.length} (ages {household.childAges.join(', ')})
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

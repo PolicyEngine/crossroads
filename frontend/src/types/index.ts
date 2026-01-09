@@ -8,6 +8,7 @@ export interface Household {
   age: number;
   hasESI: boolean;
   spouseHasESI: boolean;
+  year: number;
 }
 
 export type LifeEventType =
