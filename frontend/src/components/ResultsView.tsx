@@ -32,6 +32,39 @@ function formatChange(value: number): string {
   return prefix + formatCurrency(value);
 }
 
+// Tooltips explaining what each program does
+const PROGRAM_TOOLTIPS: Record<string, string> = {
+  // Tax credits
+  ctc: "Reduces your federal income tax. Up to $2,000 per qualifying child.",
+  earned_income_tax_credit: "Reduces your federal income tax based on earned income. Can result in a refund.",
+  cdcc: "Reduces your federal income tax for childcare expenses while you work.",
+  premium_tax_credit: "Reduces the cost of health insurance purchased through the ACA marketplace.",
+  savers_credit: "Reduces your federal income tax for retirement savings contributions.",
+  american_opportunity_credit: "Reduces your federal income tax for college education expenses.",
+  lifetime_learning_credit: "Reduces your federal income tax for education and training expenses.",
+  // State credits
+  state_eitc: "State-level credit that reduces your state income tax, similar to federal EITC.",
+  state_ctc: "State-level credit that reduces your state income tax for qualifying children.",
+  ca_eitc: "California's earned income credit - reduces CA state tax.",
+  ca_yctc: "California credit for families with young children under age 6.",
+  ny_eitc: "New York's earned income credit - reduces NY state tax.",
+  ny_ctc: "New York's child tax credit - reduces NY state tax.",
+  // Benefits
+  snap: "Monthly benefit for purchasing food (formerly food stamps).",
+  wic: "Nutrition assistance for pregnant women, infants, and children under 5.",
+  tanf: "Temporary cash assistance for families with children.",
+  ssi: "Monthly cash assistance for aged, blind, or disabled individuals with limited income.",
+  medicaid: "Free or low-cost health coverage for eligible low-income individuals.",
+  chip: "Low-cost health coverage for children in families with income too high for Medicaid.",
+  spm_unit_capped_housing_subsidy: "Reduces your housing costs through subsidized rent.",
+  ccdf: "Helps pay for childcare so you can work or attend training.",
+  // Taxes
+  income_tax: "Federal tax on your taxable income after deductions and credits.",
+  state_income_tax: "State tax on your income, varies by state.",
+  employee_payroll_tax: "Social Security and Medicare taxes (FICA) withheld from wages.",
+  self_employment_tax: "Social Security and Medicare taxes for self-employed individuals.",
+};
+
 interface SummaryCardProps {
   title: string;
   before: number;
@@ -394,13 +427,34 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
     const isTax = item.category === 'tax';
     const isPositive = isTax ? diff < 0 : diff > 0;
     const isNegative = isTax ? diff > 0 : diff < 0;
+    const tooltip = PROGRAM_TOOLTIPS[item.name];
 
     return (
       <div
         key={item.name}
-        className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 transition-colors group"
       >
-        <span className="text-sm text-gray-700">{item.label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-700">{item.label}</span>
+          {tooltip && (
+            <div className="relative group/tooltip">
+              <svg
+                className="w-4 h-4 text-gray-300 group-hover/tooltip:text-gray-500 cursor-help transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="absolute left-0 bottom-full mb-2 hidden group-hover/tooltip:block z-10 w-64">
+                <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg">
+                  {tooltip}
+                  <div className="absolute left-3 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-400">
             {formatCurrency(item.before)}
