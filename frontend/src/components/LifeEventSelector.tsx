@@ -278,28 +278,54 @@ export default function LifeEventSelector({
           </div>
         );
 
-      case 'changing_income':
+      case 'changing_income': {
+        const isMarried = household.filingStatus === 'married_jointly' || household.filingStatus === 'married_separately';
         return (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <label className="label">New Annual Income</label>
-            <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
-              <span className="currency-prefix">$</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={getIncomeInputValue('newIncome', Math.round(household.income * 1.2))}
-                onChange={(e) => handleParamChange('newIncome', e.target.value)}
-                onFocus={() => handleParamFocus('newIncome', (eventParams.newIncome as number) ?? Math.round(household.income * 1.2))}
-                onBlur={() => handleParamBlur('newIncome', Math.round(household.income * 1.2))}
-                disabled={disabled}
-                className="currency-field"
-              />
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+            <div>
+              <label className="label">{isMarried ? 'Your New Income' : 'New Annual Income'}</label>
+              <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
+                <span className="currency-prefix">$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={getIncomeInputValue('newIncome', household.income)}
+                  onChange={(e) => handleParamChange('newIncome', e.target.value)}
+                  onFocus={() => handleParamFocus('newIncome', (eventParams.newIncome as number) ?? household.income)}
+                  onBlur={() => handleParamBlur('newIncome', household.income)}
+                  disabled={disabled}
+                  className="currency-field"
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-gray-500">
+                Current: ${household.income.toLocaleString()}
+              </p>
             </div>
-            <p className="mt-1.5 text-xs text-gray-500">
-              Current income: ${household.income.toLocaleString()}
-            </p>
+
+            {isMarried && (
+              <div>
+                <label className="label">Spouse&apos;s New Income</label>
+                <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
+                  <span className="currency-prefix">$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={getIncomeInputValue('newSpouseIncome', household.spouseIncome)}
+                    onChange={(e) => handleParamChange('newSpouseIncome', e.target.value)}
+                    onFocus={() => handleParamFocus('newSpouseIncome', (eventParams.newSpouseIncome as number) ?? household.spouseIncome)}
+                    onBlur={() => handleParamBlur('newSpouseIncome', household.spouseIncome)}
+                    disabled={disabled}
+                    className="currency-field"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Current: ${household.spouseIncome.toLocaleString()}
+                </p>
+              </div>
+            )}
           </div>
         );
+      }
 
       case 'losing_esi':
         // No additional params needed - just simulates losing health insurance

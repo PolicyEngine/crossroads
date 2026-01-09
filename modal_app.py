@@ -49,6 +49,44 @@ def simulate(data: dict) -> dict:
         Retirement,
         Unemployment,
     )
+    from crossroads.events.base import LifeEvent
+    from dataclasses import dataclass
+    from typing import Optional
+
+    @dataclass
+    class IncomeChange(LifeEvent):
+        """Income change event that can modify both head and spouse incomes."""
+        new_head_income: Optional[float] = None
+        new_spouse_income: Optional[float] = None
+
+        @property
+        def name(self) -> str:
+            return "Income Change"
+
+        @property
+        def description(self) -> str:
+            parts = []
+            if self.new_head_income is not None:
+                parts.append(f"Your income: ${self.new_head_income:,.0f}")
+            if self.new_spouse_income is not None:
+                parts.append(f"Spouse income: ${self.new_spouse_income:,.0f}")
+            return "Changing " + " and ".join(parts) if parts else "Income change"
+
+        def apply(self, household):
+            new_household = household.copy()
+            if self.new_head_income is not None and len(new_household.members) > 0:
+                new_household.members[0].employment_income = self.new_head_income
+            if self.new_spouse_income is not None and len(new_household.members) > 1:
+                new_household.members[1].employment_income = self.new_spouse_income
+            return new_household
+
+        def validate(self, household):
+            errors = []
+            if self.new_head_income is not None and self.new_head_income < 0:
+                errors.append("Head income cannot be negative")
+            if self.new_spouse_income is not None and self.new_spouse_income < 0:
+                errors.append("Spouse income cannot be negative")
+            return errors
     from crossroads.household import Household, Person
     from crossroads.metadata import get_category, get_label, get_priority
 
@@ -94,9 +132,9 @@ def simulate(data: dict) -> dict:
                 spouse_children=[Person(age=age) for age in params.get("spouseChildAges", [])],
                 spouse_has_esi=params.get("spouseHasESI", False),
             ),
-            "changing_income": lambda: JobChange(
-                new_income=household.members[0].employment_income
-                * (1 + params.get("percentChange", 20) / 100)
+            "changing_income": lambda: IncomeChange(
+                new_head_income=params.get("newIncome"),
+                new_spouse_income=params.get("newSpouseIncome"),
             ),
             "retiring": lambda: Retirement(),
             "divorce": lambda: Divorce(),
