@@ -244,9 +244,9 @@ export default function HouseholdForm({
                     type="number"
                     min="18"
                     max="100"
-                    value={editingField === 'spouseAge' ? editingValue : household.spouseAge}
+                    value={editingField === 'spouseAge' ? editingValue : (household.spouseAge || 30)}
                     onChange={(e) => handleNumberChange('spouseAge', e.target.value)}
-                    onFocus={() => handleNumberFocus('spouseAge', household.spouseAge)}
+                    onFocus={() => handleNumberFocus('spouseAge', household.spouseAge || 30)}
                     onBlur={() => handleNumberBlur('spouseAge', 18, 100)}
                     disabled={disabled}
                     className="input-field"
@@ -263,9 +263,9 @@ export default function HouseholdForm({
                       id="spouseIncome"
                       type="text"
                       inputMode="numeric"
-                      value={getIncomeDisplayValue('spouseIncome', household.spouseIncome)}
+                      value={getIncomeDisplayValue('spouseIncome', household.spouseIncome ?? 0)}
                       onChange={(e) => handleNumberChange('spouseIncome', e.target.value)}
-                      onFocus={() => handleNumberFocus('spouseIncome', household.spouseIncome)}
+                      onFocus={() => handleNumberFocus('spouseIncome', household.spouseIncome ?? 0)}
                       onBlur={() => handleNumberBlur('spouseIncome', 0)}
                       disabled={disabled}
                       className="currency-field"

@@ -458,8 +458,8 @@ export default function Home() {
                         <span className="text-gray-500">Spouse Income</span>
                         <p className="font-medium text-gray-900">
                           {selectedEvent === 'changing_income' && eventParams.newSpouseIncome !== undefined
-                            ? `$${household.spouseIncome.toLocaleString()} → $${(eventParams.newSpouseIncome as number).toLocaleString()}`
-                            : `$${household.spouseIncome.toLocaleString()}`}
+                            ? `$${(household.spouseIncome ?? 0).toLocaleString()} → $${(eventParams.newSpouseIncome as number).toLocaleString()}`
+                            : `$${(household.spouseIncome ?? 0).toLocaleString()}`}
                         </p>
                       </div>
                     )}
