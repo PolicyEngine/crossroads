@@ -18,7 +18,20 @@ function decodeScenario(encoded: string): { household: Household; event: LifeEve
   try {
     const data = JSON.parse(atob(encoded));
     if (data.h && data.e) {
-      return { household: data.h, event: data.e, params: data.p || {} };
+      // Ensure all required household fields have defaults (for backwards compatibility)
+      const household: Household = {
+        state: data.h.state || 'CA',
+        filingStatus: data.h.filingStatus || 'single',
+        income: data.h.income ?? 50000,
+        spouseIncome: data.h.spouseIncome ?? 0,
+        spouseAge: data.h.spouseAge ?? 30,
+        childAges: data.h.childAges || [],
+        age: data.h.age ?? 30,
+        hasESI: data.h.hasESI ?? false,
+        spouseHasESI: data.h.spouseHasESI ?? false,
+        year: data.h.year ?? 2025,
+      };
+      return { household, event: data.e, params: data.p || {} };
     }
   } catch {
     // Invalid encoding
@@ -415,7 +428,7 @@ export default function Home() {
                     <div>
                       <span className="text-gray-500">Tax Year</span>
                       <p className="font-medium text-gray-900">
-                        {household.year}
+                        {household.year || 2025}
                       </p>
                     </div>
                     <div>

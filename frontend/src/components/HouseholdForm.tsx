@@ -134,7 +134,7 @@ export default function HouseholdForm({
             </label>
             <select
               id="year"
-              value={household.year}
+              value={household.year || 2025}
               onChange={(e) => updateField('year', parseInt(e.target.value))}
               disabled={disabled}
               className="select-field"
