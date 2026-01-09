@@ -95,6 +95,17 @@ export default function Home() {
       }
 
       const data = await response.json();
+
+      // Check if API returned an error
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Validate the response has expected structure
+      if (!data.before || !data.after) {
+        throw new Error('Invalid response from simulation');
+      }
+
       setResult(data);
 
       // Update URL with shareable link

@@ -543,13 +543,34 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
 export default function ResultsView({ result, onReset }: ResultsViewProps) {
   const [showAllBenefits, setShowAllBenefits] = useState(false);
 
-  const primaryMetrics = result.before.metrics.filter(
+  // Defensive checks for incomplete data
+  const metrics = result?.before?.metrics || [];
+
+  const primaryMetrics = metrics.filter(
     m => m.priority === 1 || m.before !== 0 || m.after !== 0
   );
 
-  const secondaryWithValues = result.before.metrics.filter(
+  const secondaryWithValues = metrics.filter(
     m => m.priority === 2 && (m.before !== 0 || m.after !== 0)
   );
+
+  // If result is malformed, show error state
+  if (!result?.before || !result?.after) {
+    return (
+      <div className="card p-8 text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
+        <p className="text-gray-500 mb-4">The simulation returned incomplete data. Please try again.</p>
+        <button onClick={onReset} className="btn btn-primary">
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
