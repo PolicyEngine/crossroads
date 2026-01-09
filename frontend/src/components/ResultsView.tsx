@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Component, ReactNode } from 'react';
+import { useState } from 'react';
 import { SimulationResult, BenefitMetric, HealthcareCoverage } from '@/types';
 import {
   BarChart,
@@ -17,40 +17,6 @@ import {
 interface ResultsViewProps {
   result: SimulationResult;
   onReset: () => void;
-}
-
-// Error boundary to catch rendering errors
-interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback: ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
-}
-
-// Safe number formatting that handles undefined/null/NaN
-function safeNumber(value: unknown): number {
-  if (typeof value === 'number' && !isNaN(value)) return value;
-  return 0;
 }
 
 function formatCurrency(value: number): string {
@@ -75,9 +41,7 @@ interface SummaryCardProps {
 }
 
 function SummaryCard({ title, before, after, inverse = false, icon }: SummaryCardProps) {
-  const safeBefore = safeNumber(before);
-  const safeAfter = safeNumber(after);
-  const diff = safeAfter - safeBefore;
+  const diff = after - before;
   const isPositive = inverse ? diff < 0 : diff > 0;
   const isNegative = inverse ? diff > 0 : diff < 0;
 
@@ -91,7 +55,7 @@ function SummaryCard({ title, before, after, inverse = false, icon }: SummaryCar
       </div>
       <div className="flex items-baseline gap-3">
         <span className="text-2xl font-bold text-gray-900">
-          {formatCurrency(safeAfter)}
+          {formatCurrency(after)}
         </span>
         <span
           className={`text-sm font-semibold px-2 py-0.5 rounded-full ${
@@ -106,7 +70,7 @@ function SummaryCard({ title, before, after, inverse = false, icon }: SummaryCar
         </span>
       </div>
       <p className="mt-1.5 text-sm text-gray-400">
-        was {formatCurrency(safeBefore)}
+        was {formatCurrency(before)}
       </p>
     </div>
   );
@@ -119,18 +83,13 @@ function HealthcareCoverageCard({
   before?: HealthcareCoverage;
   after?: HealthcareCoverage;
 }) {
-  // Defensive: ensure we have valid objects
   if (!before && !after) return null;
 
   const coverageTypes = ['ESI', 'Medicaid', 'CHIP', 'Marketplace'] as const;
 
-  // Safely access summary objects
-  const beforeSummary = before?.summary || {};
-  const afterSummary = after?.summary || {};
-
   // Check if anyone has any coverage after the event
   const hasCoverage = coverageTypes.some(
-    (type) => (afterSummary[type]?.length || 0) > 0
+    (type) => (after?.summary[type]?.length || 0) > 0
   );
 
   if (!hasCoverage) return null;
@@ -174,15 +133,13 @@ function HealthcareCoverageCard({
 
       <div className="space-y-2">
         {coverageTypes.map((type) => {
-          const afterPeople = afterSummary[type] || [];
-          const beforePeople = beforeSummary[type] || [];
+          const afterPeople = after?.summary[type] || [];
+          const beforePeople = before?.summary[type] || [];
 
-          if (!Array.isArray(afterPeople) || afterPeople.length === 0) return null;
+          if (afterPeople.length === 0) return null;
 
           // Find who was added to this coverage type
-          const added = Array.isArray(beforePeople)
-            ? afterPeople.filter(p => !beforePeople.includes(p))
-            : afterPeople;
+          const added = afterPeople.filter(p => !beforePeople.includes(p));
 
           return (
             <div key={type} className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-gray-50">
@@ -211,16 +168,13 @@ function HealthcareCoverageCard({
 }
 
 function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
-  // Defensive: ensure metrics is an array
-  const safeMetrics = Array.isArray(metrics) ? metrics : [];
-
-  const chartData = safeMetrics
-    .filter((m) => m && (safeNumber(m.before) !== 0 || safeNumber(m.after) !== 0))
+  const chartData = metrics
+    .filter((m) => m.before !== 0 || m.after !== 0)
     .map((m) => ({
-      name: m.label || 'Unknown',
-      Before: m.category === 'tax' ? -safeNumber(m.before) : safeNumber(m.before),
-      After: m.category === 'tax' ? -safeNumber(m.after) : safeNumber(m.after),
-      category: m.category || 'benefit',
+      name: m.label,
+      Before: m.category === 'tax' ? -m.before : m.before,
+      After: m.category === 'tax' ? -m.after : m.after,
+      category: m.category,
     }));
 
   if (chartData.length === 0) {
@@ -291,17 +245,14 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
 }
 
 function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
-  // Defensive: ensure metrics is an array
-  const safeMetrics = Array.isArray(metrics) ? metrics : [];
-
-  const significantChanges = safeMetrics
-    .filter((m) => m && Math.abs(safeNumber(m.after) - safeNumber(m.before)) > 0)
-    .sort((a, b) => Math.abs(safeNumber(b.after) - safeNumber(b.before)) - Math.abs(safeNumber(a.after) - safeNumber(a.before)));
+  const significantChanges = metrics
+    .filter((m) => Math.abs(m.after - m.before) > 0)
+    .sort((a, b) => Math.abs(b.after - b.before) - Math.abs(a.after - a.before));
 
   const chartData = significantChanges.map((m) => ({
-    name: m.label || 'Unknown',
-    change: safeNumber(m.after) - safeNumber(m.before),
-    category: m.category || 'benefit',
+    name: m.label,
+    change: m.after - m.before,
+    category: m.category,
   }));
 
   const getBarColor = (entry: { change: number; category: string }) => {
@@ -383,16 +334,12 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
 function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boolean }) {
   const [showZeroPrograms, setShowZeroPrograms] = useState(false);
 
-  // Defensive: ensure metrics is an array
-  const safeMetrics = Array.isArray(metrics) ? metrics : [];
-
   // Separate metrics into those with values and those without
   const activeMetrics: BenefitMetric[] = [];
   const zeroMetrics: BenefitMetric[] = [];
 
-  safeMetrics.forEach((m) => {
-    if (!m) return;
-    const hasValue = safeNumber(m.before) !== 0 || safeNumber(m.after) !== 0;
+  metrics.forEach((m) => {
+    const hasValue = m.before !== 0 || m.after !== 0;
     const isStateProgram = m.category === 'state_credit' || m.category === 'state_benefit';
 
     // Always hide state programs with no values (too many to show)
@@ -443,29 +390,26 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
   );
 
   const renderItem = (item: BenefitMetric) => {
-    if (!item) return null;
-    const beforeVal = safeNumber(item.before);
-    const afterVal = safeNumber(item.after);
-    const diff = afterVal - beforeVal;
+    const diff = item.after - item.before;
     const isTax = item.category === 'tax';
     const isPositive = isTax ? diff < 0 : diff > 0;
     const isNegative = isTax ? diff > 0 : diff < 0;
 
     return (
       <div
-        key={item.name || Math.random()}
+        key={item.name}
         className="flex items-center justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 transition-colors"
       >
-        <span className="text-sm text-gray-700">{item.label || 'Unknown'}</span>
+        <span className="text-sm text-gray-700">{item.label}</span>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-400">
-            {formatCurrency(beforeVal)}
+            {formatCurrency(item.before)}
           </span>
           <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           <span className="text-sm font-medium text-gray-900">
-            {formatCurrency(afterVal)}
+            {formatCurrency(item.after)}
           </span>
           {diff !== 0 && (
             <span
@@ -542,20 +486,15 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
   );
 }
 
-function ResultsViewContent({ result, onReset }: ResultsViewProps) {
+export default function ResultsView({ result, onReset }: ResultsViewProps) {
   const [showAllBenefits, setShowAllBenefits] = useState(false);
 
-  // Defensive: safely access nested properties
-  const beforeData = result?.before || { netIncome: 0, totalTax: 0, totalBenefits: 0, metrics: [] };
-  const afterData = result?.after || { netIncome: 0, totalTax: 0, totalBenefits: 0, metrics: [] };
-  const metrics = Array.isArray(beforeData.metrics) ? beforeData.metrics : [];
-
-  const primaryMetrics = metrics.filter(
-    m => m && (m.priority === 1 || safeNumber(m.before) !== 0 || safeNumber(m.after) !== 0)
+  const primaryMetrics = result.before.metrics.filter(
+    m => m.priority === 1 || m.before !== 0 || m.after !== 0
   );
 
-  const secondaryWithValues = metrics.filter(
-    m => m && m.priority === 2 && (safeNumber(m.before) !== 0 || safeNumber(m.after) !== 0)
+  const secondaryWithValues = result.before.metrics.filter(
+    m => m.priority === 2 && (m.before !== 0 || m.after !== 0)
   );
 
   return (
@@ -564,8 +503,8 @@ function ResultsViewContent({ result, onReset }: ResultsViewProps) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SummaryCard
           title="Net Income"
-          before={beforeData.netIncome}
-          after={afterData.netIncome}
+          before={result.before.netIncome}
+          after={result.after.netIncome}
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -574,8 +513,8 @@ function ResultsViewContent({ result, onReset }: ResultsViewProps) {
         />
         <SummaryCard
           title="Total Taxes"
-          before={beforeData.totalTax}
-          after={afterData.totalTax}
+          before={result.before.totalTax}
+          after={result.after.totalTax}
           inverse
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -585,8 +524,8 @@ function ResultsViewContent({ result, onReset }: ResultsViewProps) {
         />
         <SummaryCard
           title="Benefits & Credits"
-          before={beforeData.totalBenefits}
-          after={afterData.totalBenefits}
+          before={result.before.totalBenefits}
+          after={result.after.totalBenefits}
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
@@ -622,7 +561,7 @@ function ResultsViewContent({ result, onReset }: ResultsViewProps) {
                 : 'text-[#5A5A5A] hover:bg-[#F9FAFB]'
             }`}
           >
-            All Benefits ({metrics.length})
+            All Benefits ({result.before.metrics.length})
           </button>
         </div>
       </div>
@@ -642,12 +581,12 @@ function ResultsViewContent({ result, onReset }: ResultsViewProps) {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ComparisonChart metrics={showAllBenefits ? metrics : primaryMetrics} />
-        <ChangeBreakdown metrics={showAllBenefits ? metrics : primaryMetrics} />
+        <ComparisonChart metrics={showAllBenefits ? result.before.metrics : primaryMetrics} />
+        <ChangeBreakdown metrics={showAllBenefits ? result.before.metrics : primaryMetrics} />
       </div>
 
       {/* Detailed Breakdown */}
-      <DetailedBreakdown metrics={metrics} showAll={showAllBenefits} />
+      <DetailedBreakdown metrics={result.before.metrics} showAll={showAllBenefits} />
 
       {/* Reset Button */}
       <div className="flex justify-center pt-4">
@@ -659,37 +598,5 @@ function ResultsViewContent({ result, onReset }: ResultsViewProps) {
         </button>
       </div>
     </div>
-  );
-}
-
-// Error fallback component
-function ResultsErrorFallback({ onReset }: { onReset: () => void }) {
-  return (
-    <div className="card p-8 text-center">
-      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
-      <p className="text-gray-500 mb-6">There was an error displaying your results. Please try again.</p>
-      <button onClick={onReset} className="btn btn-primary">
-        Start Over
-      </button>
-    </div>
-  );
-}
-
-// Main exported component with error boundary
-export default function ResultsView({ result, onReset }: ResultsViewProps) {
-  // Early return if result is completely invalid
-  if (!result || typeof result !== 'object') {
-    return <ResultsErrorFallback onReset={onReset} />;
-  }
-
-  return (
-    <ErrorBoundary fallback={<ResultsErrorFallback onReset={onReset} />}>
-      <ResultsViewContent result={result} onReset={onReset} />
-    </ErrorBoundary>
   );
 }

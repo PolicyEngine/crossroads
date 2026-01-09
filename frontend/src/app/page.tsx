@@ -1,12 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import HouseholdForm from '@/components/HouseholdForm';
 import LifeEventSelector from '@/components/LifeEventSelector';
 import ResultsView from '@/components/ResultsView';
 import { Household, LifeEventType, SimulationResult } from '@/types';
 
 type Step = 'household' | 'event' | 'results';
+
+// URL encoding/decoding helpers
+function encodeScenario(household: Household, event: LifeEventType, params: Record<string, unknown>): string {
+  const data = { h: household, e: event, p: params };
+  return btoa(JSON.stringify(data));
+}
+
+function decodeScenario(encoded: string): { household: Household; event: LifeEventType; params: Record<string, unknown> } | null {
+  try {
+    const data = JSON.parse(atob(encoded));
+    if (data.h && data.e) {
+      return { household: data.h, event: data.e, params: data.p || {} };
+    }
+  } catch {
+    // Invalid encoding
+  }
+  return null;
+}
 
 const DEFAULT_HOUSEHOLD: Household = {
   state: 'CA',
@@ -34,22 +52,27 @@ export default function Home() {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showCopied, setShowCopied] = useState(false);
 
-  const handleSimulate = async () => {
-    if (!selectedEvent) return;
-
+  // Run simulation with given parameters
+  const runSimulation = useCallback(async (
+    h: Household,
+    event: LifeEventType,
+    params: Record<string, unknown>
+  ) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
-    setStep('results'); // Navigate to results immediately
+    setStep('results');
 
     try {
       const response = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          household,
-          lifeEvent: { type: selectedEvent, params: eventParams },
+          household: h,
+          lifeEvent: { type: event, params },
         }),
       });
 
@@ -59,11 +82,57 @@ export default function Home() {
 
       const data = await response.json();
       setResult(data);
+
+      // Update URL with shareable link
+      const encoded = encodeScenario(h, event, params);
+      const url = `${window.location.origin}?s=${encoded}`;
+      setShareUrl(url);
+      window.history.replaceState({}, '', `?s=${encoded}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
-      // Stay on results page to show error
     } finally {
       setIsLoading(false);
+    }
+  }, []);
+
+  // Check URL for shared scenario on page load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('s');
+    if (encoded) {
+      const scenario = decodeScenario(encoded);
+      if (scenario) {
+        setHousehold(scenario.household);
+        setSelectedEvent(scenario.event);
+        setEventParams(scenario.params);
+        // Auto-run simulation
+        runSimulation(scenario.household, scenario.event, scenario.params);
+      }
+    }
+  }, [runSimulation]);
+
+  const handleSimulate = async () => {
+    if (!selectedEvent) return;
+    await runSimulation(household, selectedEvent, eventParams);
+  };
+
+  const handleShare = async () => {
+    if (shareUrl) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 2000);
+      } catch {
+        // Fallback for browsers that don't support clipboard API
+        const input = document.createElement('input');
+        input.value = shareUrl;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 2000);
+      }
     }
   };
 
@@ -73,6 +142,9 @@ export default function Home() {
     setEventParams({});
     setResult(null);
     setError(null);
+    setShareUrl(null);
+    // Clear URL params
+    window.history.replaceState({}, '', window.location.pathname);
   };
 
   const canProceedToEvent = household.income >= 0;
@@ -293,7 +365,7 @@ export default function Home() {
                 <div className="mb-8 p-5 bg-[#E6FFFA] rounded-xl border border-[#319795]/20">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-900">Your Scenario</h3>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => setStep('household')}
                         className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
@@ -306,6 +378,27 @@ export default function Home() {
                         className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
                       >
                         Change Event
+                      </button>
+                      <span className="text-gray-300">|</span>
+                      <button
+                        onClick={handleShare}
+                        className="text-sm text-[#285E61] hover:text-[#319795] font-medium inline-flex items-center gap-1"
+                      >
+                        {showCopied ? (
+                          <>
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                            Share
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

@@ -48,13 +48,23 @@ export default function HouseholdForm({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
 
+  // Format number with commas
+  const formatWithCommas = (value: number): string => {
+    return value.toLocaleString('en-US');
+  };
+
+  // Parse number from string with commas
+  const parseFromCommas = (value: string): number => {
+    return parseInt(value.replace(/,/g, '')) || 0;
+  };
+
   // Handle number input - allow empty during typing
   const handleNumberChange = (
     field: 'income' | 'spouseIncome' | 'age' | 'spouseAge',
     value: string,
   ) => {
     setEditingValue(value);
-    const parsed = parseInt(value);
+    const parsed = parseInt(value.replace(/,/g, ''));
     if (!isNaN(parsed)) {
       updateField(field, parsed);
     }
@@ -71,7 +81,7 @@ export default function HouseholdForm({
     min: number,
     max?: number
   ) => {
-    const parsed = parseInt(editingValue);
+    const parsed = parseFromCommas(editingValue);
     if (isNaN(parsed) || editingValue === '') {
       updateField(field, min);
     } else {
@@ -80,6 +90,14 @@ export default function HouseholdForm({
     }
     setEditingField(null);
     setEditingValue('');
+  };
+
+  // Get display value for income fields (with commas when not editing)
+  const getIncomeDisplayValue = (field: 'income' | 'spouseIncome', value: number): string => {
+    if (editingField === field) {
+      return editingValue;
+    }
+    return formatWithCommas(value);
   };
 
   return (
@@ -162,10 +180,9 @@ export default function HouseholdForm({
               <span className="currency-prefix">$</span>
               <input
                 id="income"
-                type="number"
-                min="0"
-                step="1000"
-                value={editingField === 'income' ? editingValue : household.income}
+                type="text"
+                inputMode="numeric"
+                value={getIncomeDisplayValue('income', household.income)}
                 onChange={(e) => handleNumberChange('income', e.target.value)}
                 onFocus={() => handleNumberFocus('income', household.income)}
                 onBlur={() => handleNumberBlur('income', 0)}
@@ -226,10 +243,9 @@ export default function HouseholdForm({
                     <span className="currency-prefix">$</span>
                     <input
                       id="spouseIncome"
-                      type="number"
-                      min="0"
-                      step="1000"
-                      value={editingField === 'spouseIncome' ? editingValue : household.spouseIncome}
+                      type="text"
+                      inputMode="numeric"
+                      value={getIncomeDisplayValue('spouseIncome', household.spouseIncome)}
                       onChange={(e) => handleNumberChange('spouseIncome', e.target.value)}
                       onFocus={() => handleNumberFocus('spouseIncome', household.spouseIncome)}
                       onBlur={() => handleNumberBlur('spouseIncome', 0)}

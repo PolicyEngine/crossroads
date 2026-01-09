@@ -28,10 +28,15 @@ export default function LifeEventSelector({
   const [editingChildIndex, setEditingChildIndex] = useState<number | null>(null);
   const [editingChildValue, setEditingChildValue] = useState<string>('');
 
+  // Format number with commas
+  const formatWithCommas = (value: number): string => {
+    return value.toLocaleString('en-US');
+  };
+
   // Handle number input - allow empty during typing
   const handleParamChange = (key: string, value: string) => {
     setEditingValue(value);
-    const parsed = parseInt(value);
+    const parsed = parseInt(value.replace(/,/g, ''));
     if (!isNaN(parsed)) {
       onParamsChange({ ...eventParams, [key]: parsed });
     }
@@ -44,7 +49,7 @@ export default function LifeEventSelector({
 
   // Validate and set default on blur
   const handleParamBlur = (key: string, defaultVal: number, min = 0, max?: number) => {
-    const parsed = parseInt(editingValue);
+    const parsed = parseInt(editingValue.replace(/,/g, ''));
     if (isNaN(parsed) || editingValue === '') {
       onParamsChange({ ...eventParams, [key]: defaultVal });
     } else {
@@ -57,6 +62,15 @@ export default function LifeEventSelector({
 
   const getInputValue = (key: string, fallback: number) => {
     return editingField === key ? editingValue : (eventParams[key] as number) ?? fallback;
+  };
+
+  // Get formatted income value with commas
+  const getIncomeInputValue = (key: string, fallback: number) => {
+    if (editingField === key) {
+      return editingValue;
+    }
+    const value = (eventParams[key] as number) ?? fallback;
+    return formatWithCommas(value);
   };
 
   const renderEventParams = (event: LifeEvent) => {
@@ -108,10 +122,9 @@ export default function LifeEventSelector({
                 <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
                   <span className="currency-prefix">$</span>
                   <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={getInputValue('spouseIncome', 0)}
+                    type="text"
+                    inputMode="numeric"
+                    value={getIncomeInputValue('spouseIncome', 0)}
                     onChange={(e) => handleParamChange('spouseIncome', e.target.value)}
                     onFocus={() => handleParamFocus('spouseIncome', (eventParams.spouseIncome as number) || 0)}
                     onBlur={() => handleParamBlur('spouseIncome', 0)}
@@ -272,10 +285,9 @@ export default function LifeEventSelector({
             <div className={`currency-input ${disabled ? 'disabled' : ''}`}>
               <span className="currency-prefix">$</span>
               <input
-                type="number"
-                min="0"
-                step="1000"
-                value={getInputValue('newIncome', Math.round(household.income * 1.2))}
+                type="text"
+                inputMode="numeric"
+                value={getIncomeInputValue('newIncome', Math.round(household.income * 1.2))}
                 onChange={(e) => handleParamChange('newIncome', e.target.value)}
                 onFocus={() => handleParamFocus('newIncome', (eventParams.newIncome as number) ?? Math.round(household.income * 1.2))}
                 onBlur={() => handleParamBlur('newIncome', Math.round(household.income * 1.2))}

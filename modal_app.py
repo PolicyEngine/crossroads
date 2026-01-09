@@ -1,5 +1,7 @@
 """Modal app for Crossroads simulations - faster serverless compute."""
 
+import hashlib
+import json
 import modal
 
 app = modal.App("crossroads-api")
@@ -9,6 +11,16 @@ image = (
     .pip_install("policyengine-us>=1.0.0", "fastapi")
     .add_local_dir("crossroads", "/root/crossroads")
 )
+
+# Persistent cache for simulation results (survives container restarts)
+cache = modal.Dict.from_name("crossroads-cache", create_if_missing=True)
+
+
+def get_cache_key(data: dict) -> str:
+    """Generate a cache key from the request data."""
+    # Normalize and hash the request
+    normalized = json.dumps(data, sort_keys=True)
+    return hashlib.md5(normalized.encode()).hexdigest()
 
 
 @app.function(
@@ -165,6 +177,16 @@ def simulate(data: dict) -> dict:
         return response
 
     try:
+        # Check cache first
+        cache_key = get_cache_key(data)
+        try:
+            cached = cache[cache_key]
+            if cached:
+                return cached
+        except KeyError:
+            pass  # Not in cache
+
+        # Run simulation
         household = create_household_from_request(data.get("household", {}))
         event = create_event_from_request(
             data.get("lifeEvent", {}).get("type"),
@@ -172,7 +194,15 @@ def simulate(data: dict) -> dict:
             household,
         )
         result = compare(household, event)
-        return format_result_for_frontend(result)
+        response = format_result_for_frontend(result)
+
+        # Cache the result
+        try:
+            cache[cache_key] = response
+        except Exception:
+            pass  # Don't fail if caching fails
+
+        return response
     except ValueError as e:
         return {"error": str(e)}
     except Exception as e:
