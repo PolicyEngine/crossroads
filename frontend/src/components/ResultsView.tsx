@@ -615,7 +615,7 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
                 : 'text-[#5A5A5A] hover:bg-[#F9FAFB]'
             }`}
           >
-            All Benefits ({result.before.metrics.length})
+            All Programs ({result.before.metrics.length})
           </button>
         </div>
       </div>
