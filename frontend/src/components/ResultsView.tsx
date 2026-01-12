@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { SimulationResult, BenefitMetric, HealthcareCoverage } from '@/types';
+import { SimulationResult, BenefitMetric, HealthcareCoverage, Household } from '@/types';
+import CliffChart from './CliffChart';
 import {
   BarChart,
   Bar,
@@ -16,6 +17,7 @@ import {
 
 interface ResultsViewProps {
   result: SimulationResult;
+  household: Household;
   onReset: () => void;
 }
 
@@ -540,8 +542,9 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
   );
 }
 
-export default function ResultsView({ result, onReset }: ResultsViewProps) {
+export default function ResultsView({ result, household, onReset }: ResultsViewProps) {
   const [showAllBenefits, setShowAllBenefits] = useState(false);
+  const [showCliffChart, setShowCliffChart] = useState(false);
 
   // Defensive checks for incomplete data
   const metrics = result?.before?.metrics || [];
@@ -662,6 +665,30 @@ export default function ResultsView({ result, onReset }: ResultsViewProps) {
 
       {/* Detailed Breakdown */}
       <DetailedBreakdown metrics={result.before.metrics} showAll={showAllBenefits} />
+
+      {/* Cliff Analysis Toggle */}
+      <div className="flex justify-center">
+        <button
+          onClick={() => setShowCliffChart(!showCliffChart)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          </svg>
+          {showCliffChart ? 'Hide' : 'Show'} Benefit Cliffs Analysis
+          <svg
+            className={`w-4 h-4 transition-transform ${showCliffChart ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Cliff Chart */}
+      {showCliffChart && <CliffChart household={household} />}
 
       {/* Reset Button */}
       <div className="flex justify-center pt-4">

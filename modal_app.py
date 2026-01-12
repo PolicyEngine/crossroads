@@ -247,6 +247,65 @@ def simulate(data: dict) -> dict:
         return {"error": f"Simulation failed: {str(e)}"}
 
 
+@app.function(
+    image=image,
+    timeout=300,
+    memory=2048,
+)
+@modal.fastapi_endpoint(method="POST", docs=True)
+def cliff(data: dict) -> dict:
+    """Calculate benefit cliffs across income levels using PolicyEngine."""
+    import sys
+    sys.path.insert(0, "/root")
+
+    from crossroads.compare import calculate_cliff_analysis
+    from crossroads.household import Household, Person
+
+    def create_hh(data: dict) -> Household:
+        members = []
+        head = Person(
+            age=data.get("age", 30),
+            employment_income=data.get("income", 0),
+            is_tax_unit_head=True,
+            has_esi=data.get("hasESI", False),
+        )
+        members.append(head)
+        filing_status = data.get("filingStatus", "single")
+        if filing_status in ("married_jointly", "married_separately"):
+            spouse = Person(
+                age=data.get("spouseAge", data.get("age", 30)),
+                employment_income=data.get("spouseIncome", 0),
+                is_tax_unit_spouse=True,
+                has_esi=data.get("spouseHasESI", False),
+            )
+            members.append(spouse)
+        for age in data.get("childAges", []):
+            members.append(Person(age=age))
+        return Household(
+            state=data.get("state", "CA"),
+            members=members,
+            year=data.get("year", 2025),
+        )
+
+    try:
+        household = create_hh(data.get("household", {}))
+        income_min = data.get("incomeMin", 0)
+        income_max = data.get("incomeMax", 150000)
+        num_points = min(data.get("numPoints", 30), 50)
+        results = calculate_cliff_analysis(
+            household,
+            income_min=income_min,
+            income_max=income_max,
+            num_points=num_points,
+        )
+        current_income = household.members[0].employment_income if household.members else 0
+        return {"data": results, "currentIncome": current_income}
+    except ValueError as e:
+        return {"error": str(e)}
+    except Exception as e:
+        return {"error": f"Cliff analysis failed: {str(e)}"}
+
+
 @app.function(image=image)
 @modal.fastapi_endpoint(method="GET", docs=True)
 def health() -> dict:

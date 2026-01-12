@@ -531,3 +531,123 @@ def compare(
         healthcare_before=healthcare_before,
         healthcare_after=healthcare_after,
     )
+
+
+def calculate_cliff_analysis(
+    household: Household,
+    income_min: int = 0,
+    income_max: int = 150000,
+    num_points: int = 30,
+) -> list[dict[str, Any]]:
+    """
+    Calculate taxes and benefits at multiple income levels to show cliff effects.
+
+    This helps users visualize how their benefits change as income increases,
+    revealing "benefit cliffs" where a small income increase can result in
+    a large loss of benefits.
+
+    Args:
+        household: The baseline household (income will be varied).
+        income_min: Minimum income to simulate.
+        income_max: Maximum income to simulate.
+        num_points: Number of data points to calculate.
+
+    Returns:
+        A list of data points, each containing:
+        - income: the gross income level
+        - netIncome: total after taxes and benefits
+        - totalTax: sum of all taxes
+        - totalBenefits: sum of all benefits
+        - totalCredits: sum of all tax credits
+        - breakdown: dict of individual program amounts
+    """
+    from .metadata import get_category
+
+    # Generate income points (use more points near common cliff areas)
+    step = (income_max - income_min) / (num_points - 1)
+    income_points = [int(income_min + i * step) for i in range(num_points)]
+
+    results = []
+
+    for income in income_points:
+        # Create a modified household with the new income
+        modified_household = household.copy()
+        if modified_household.members:
+            modified_household.members[0].employment_income = float(income)
+
+        # Run simulation
+        situation = modified_household.to_situation()
+        sim_results, _ = _run_simulation(situation, modified_household.year)
+
+        # Categorize results
+        total_tax = 0.0
+        total_benefits = 0.0
+        total_credits = 0.0
+        breakdown = {}
+
+        for var, value in sim_results.items():
+            if var == "household_net_income":
+                continue
+            if value == 0:
+                continue
+
+            category = get_category(var)
+            breakdown[var] = value
+
+            if category == "tax":
+                total_tax += value
+            elif category == "benefit":
+                total_benefits += value
+            elif category in ("credit", "state_credit"):
+                total_credits += value
+            elif category == "state_benefit":
+                total_benefits += value
+
+        # Calculate net income
+        net_income = income - total_tax + total_benefits + total_credits
+
+        results.append({
+            "income": income,
+            "netIncome": round(net_income, 2),
+            "totalTax": round(total_tax, 2),
+            "totalBenefits": round(total_benefits, 2),
+            "totalCredits": round(total_credits, 2),
+            "marginalRate": 0,  # Will calculate after
+            "breakdown": {k: round(v, 2) for k, v in breakdown.items() if v != 0},
+        })
+
+    # Calculate marginal rates and identify cliff causes
+    for i in range(1, len(results)):
+        income_change = results[i]["income"] - results[i - 1]["income"]
+        net_change = results[i]["netIncome"] - results[i - 1]["netIncome"]
+        if income_change > 0:
+            # Marginal rate = 1 - (net income gain / gross income gain)
+            # A rate > 100% means you lose money by earning more
+            marginal_rate = 1 - (net_change / income_change)
+            results[i]["marginalRate"] = round(marginal_rate * 100, 1)
+
+            # Find which programs changed the most (cliff causes)
+            cliff_causes = []
+            prev_breakdown = results[i - 1]["breakdown"]
+            curr_breakdown = results[i]["breakdown"]
+
+            # Get all programs from both points
+            all_programs = set(prev_breakdown.keys()) | set(curr_breakdown.keys())
+
+            for prog in all_programs:
+                prev_val = prev_breakdown.get(prog, 0)
+                curr_val = curr_breakdown.get(prog, 0)
+                change = curr_val - prev_val
+
+                # Track significant changes (benefits lost or taxes increased)
+                if abs(change) > 100:  # More than $100 change
+                    cliff_causes.append({
+                        "program": prog,
+                        "change": round(change, 0),
+                    })
+
+            # Sort by impact (biggest losses first)
+            cliff_causes.sort(key=lambda x: x["change"])
+            results[i]["cliffCauses"] = cliff_causes[:5]  # Top 5 causes
+
+    return results

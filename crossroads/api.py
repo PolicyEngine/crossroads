@@ -3,7 +3,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from .compare import compare
+from .compare import calculate_cliff_analysis, compare
 from .events import (
     ChildAgingOut,
     Divorce,
@@ -172,6 +172,38 @@ def simulate():
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": f"Simulation failed: {str(e)}"}), 500
+
+
+@app.route("/api/cliff", methods=["POST"])
+def cliff_analysis():
+    """Calculate benefit cliffs across income levels."""
+    try:
+        data = request.get_json()
+        household = create_household_from_request(data.get("household", {}))
+
+        # Optional parameters for income range
+        income_min = data.get("incomeMin", 0)
+        income_max = data.get("incomeMax", 150000)
+        num_points = min(data.get("numPoints", 30), 50)  # Cap at 50 for performance
+
+        results = calculate_cliff_analysis(
+            household,
+            income_min=income_min,
+            income_max=income_max,
+            num_points=num_points,
+        )
+
+        # Find the current income point for highlighting
+        current_income = household.members[0].employment_income if household.members else 0
+
+        return jsonify({
+            "data": results,
+            "currentIncome": current_income,
+        })
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Cliff analysis failed: {str(e)}"}), 500
 
 
 @app.route("/api/health", methods=["GET"])

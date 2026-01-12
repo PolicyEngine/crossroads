@@ -485,7 +485,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <ResultsView result={result} onReset={handleReset} />
+                <ResultsView result={result} household={household} onReset={handleReset} />
               </>
             ) : null}
           </div>
