@@ -13,13 +13,84 @@ const inter = Inter({
 const GA_ID = "G-2YHG89FY0N";
 const TOOL_NAME = "crossroads";
 
+const SITE_URL = "https://crossroads.policyengine.org";
+
 export const metadata: Metadata = {
-  title: "Crossroads | PolicyEngine",
-  description: "See how life events affect your taxes and benefits",
+  title: "Crossroads | PolicyEngine - See How Life Events Affect Your Taxes & Benefits",
+  description:
+    "Use Crossroads by PolicyEngine to simulate how major life events like having a baby, getting married, moving states, or changing income affect your taxes, benefits, and net income.",
+  keywords: [
+    "tax calculator",
+    "benefits calculator",
+    "life event simulator",
+    "PolicyEngine",
+    "tax credits",
+    "SNAP benefits",
+    "Medicaid eligibility",
+    "marriage tax impact",
+    "having a baby tax benefits",
+    "moving states taxes",
+    "income change simulation",
+    "benefit cliffs",
+    "net income calculator",
+  ],
+  authors: [{ name: "PolicyEngine", url: "https://policyengine.org" }],
+  creator: "PolicyEngine",
+  publisher: "PolicyEngine",
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Crossroads | PolicyEngine",
-    description: "See how life events affect your taxes and benefits",
+    description:
+      "Simulate how major life events affect your taxes, benefits, and net income. Free tool powered by PolicyEngine.",
     type: "website",
+    url: SITE_URL,
+    siteName: "Crossroads by PolicyEngine",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Crossroads | PolicyEngine",
+    description:
+      "Simulate how major life events affect your taxes, benefits, and net income.",
+    creator: "@ThePolicyEngine",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  other: {
+    "theme-color": "#319795",
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Crossroads",
+  description:
+    "Simulate how major life events affect your taxes, benefits, and net income.",
+  url: SITE_URL,
+  applicationCategory: "FinanceApplication",
+  operatingSystem: "Any",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  author: {
+    "@type": "Organization",
+    name: "PolicyEngine",
+    url: "https://policyengine.org",
   },
 };
 
@@ -31,6 +102,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <Header />
+        <main>{children}</main>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
           strategy="afterInteractive"
@@ -87,10 +166,6 @@ export default function RootLayout({
             })();
           `}
         </Script>
-      </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <Header />
-        <main>{children}</main>
       </body>
     </html>
   );
