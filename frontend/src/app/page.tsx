@@ -493,7 +493,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-auto py-10 text-center">
+      <footer className="mt-auto py-10 text-center" role="contentinfo">
         <p className="text-sm text-gray-500">
           Powered by{' '}
           <a

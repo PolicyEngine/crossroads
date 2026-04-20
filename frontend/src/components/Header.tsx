@@ -12,6 +12,7 @@ export default function Header() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -22,14 +23,14 @@ export default function Header() {
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 tracking-tight">
+              <span className="text-lg font-semibold text-gray-900 tracking-tight block">
                 Crossroads
-              </h1>
+              </span>
               <p className="text-xs text-gray-500 -mt-0.5">by PolicyEngine</p>
             </div>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav aria-label="Main navigation" className="flex items-center gap-1">
             <a
               href="https://policyengine.org"
               target="_blank"
