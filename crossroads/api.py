@@ -3,7 +3,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from .compare import calculate_cliff_analysis, compare
+from .compare import calculate_cliff_analysis, compare, compare_multiple
 from .events import (
     ChildAgingOut,
     Divorce,
@@ -157,16 +157,40 @@ def format_result_for_frontend(result) -> dict:
 
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
-    """Run a life event simulation."""
+    """Run a life event simulation (single or multiple events)."""
     try:
         data = request.get_json()
         household = create_household_from_request(data.get("household", {}))
-        event = create_event_from_request(
-            data.get("lifeEvent", {}).get("type"),
-            data.get("lifeEvent", {}).get("params", {}),
-            household,
-        )
-        result = compare(household, event)
+
+        # Support both single event and multiple events
+        life_events = data.get("lifeEvents", [])
+        single_event = data.get("lifeEvent")
+
+        if life_events:
+            # Multiple events mode
+            events = []
+            current_household = household
+            for evt in life_events:
+                event = create_event_from_request(
+                    evt.get("type"),
+                    evt.get("params", {}),
+                    current_household,
+                )
+                events.append(event)
+                # Update household for next event's context
+                current_household = event.apply(current_household)
+            result = compare_multiple(household, events)
+        elif single_event:
+            # Single event mode (backwards compatible)
+            event = create_event_from_request(
+                single_event.get("type"),
+                single_event.get("params", {}),
+                household,
+            )
+            result = compare(household, event)
+        else:
+            raise ValueError("No life event provided")
+
         return jsonify(format_result_for_frontend(result))
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

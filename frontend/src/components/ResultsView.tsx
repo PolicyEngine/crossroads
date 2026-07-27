@@ -18,6 +18,7 @@ import {
 interface ResultsViewProps {
   result: SimulationResult;
   household: Household;
+  onTryAnother: () => void;
   onReset: () => void;
 }
 
@@ -129,27 +130,12 @@ function HealthcareCoverageCard({
 
   if (!hasCoverage) return null;
 
-  const getCoverageIcon = (type: string) => {
-    switch (type) {
-      case 'ESI':
-        return '💼';
-      case 'Medicaid':
-        return '🏥';
-      case 'CHIP':
-        return '👶';
-      case 'Marketplace':
-        return '🛒';
-      default:
-        return '❤️';
-    }
-  };
-
   const getCoverageLabel = (type: string) => {
     switch (type) {
       case 'ESI':
-        return 'Employer Insurance';
+        return 'Employer insurance';
       case 'Marketplace':
-        return 'ACA Marketplace';
+        return 'ACA marketplace';
       default:
         return type;
     }
@@ -163,7 +149,7 @@ function HealthcareCoverageCard({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </div>
-        <h3 className="text-sm font-medium text-gray-900">Healthcare Coverage After Event</h3>
+        <h3 className="text-sm font-medium text-gray-900">Healthcare coverage after the change</h3>
       </div>
 
       <div className="space-y-2">
@@ -178,7 +164,7 @@ function HealthcareCoverageCard({
 
           return (
             <div key={type} className="flex items-center gap-3 py-1.5 px-2 rounded-lg bg-gray-50">
-              <span className="text-base">{getCoverageIcon(type)}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#319795] shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-medium text-gray-700">{getCoverageLabel(type)}</span>
                 <span className="text-gray-400 mx-2">·</span>
@@ -216,7 +202,7 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
     return (
       <div className="card p-6">
         <h3 className="text-base font-semibold text-gray-900 mb-4">
-          Before vs After
+          Before vs after
         </h3>
         <p className="text-gray-500 text-center py-8">No data to display</p>
       </div>
@@ -232,7 +218,7 @@ function ComparisonChart({ metrics }: { metrics: BenefitMetric[] }) {
   return (
     <div className="card p-6">
       <h3 className="text-base font-semibold text-gray-900 mb-4">
-        Before vs After
+        Before vs after
       </h3>
       <div style={{ height: Math.max(280, chartData.length * 40) }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -307,7 +293,7 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
     return (
       <div className="card p-6">
         <h3 className="text-base font-semibold text-gray-900 mb-4">
-          What Changed
+          What changed
         </h3>
         <p className="text-gray-500 text-center py-8">No changes detected</p>
       </div>
@@ -317,7 +303,7 @@ function ChangeBreakdown({ metrics }: { metrics: BenefitMetric[] }) {
   return (
     <div className="card p-6">
       <h3 className="text-base font-semibold text-gray-900 mb-4">
-        What Changed
+        What changed
       </h3>
       <div style={{ height: Math.max(224, chartData.length * 40) }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -488,7 +474,7 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
   return (
     <div className="card p-6">
       <h3 className="text-base font-semibold text-gray-900 mb-5">
-        Detailed Breakdown
+        Detailed breakdown
       </h3>
       <div className="space-y-6">
         {nonEmptyCategories.map(([key, category]) => (
@@ -542,7 +528,7 @@ function DetailedBreakdown({ metrics }: { metrics: BenefitMetric[]; showAll: boo
   );
 }
 
-export default function ResultsView({ result, household, onReset }: ResultsViewProps) {
+export default function ResultsView({ result, household, onTryAnother, onReset }: ResultsViewProps) {
   const [showAllBenefits, setShowAllBenefits] = useState(false);
   const [showCliffChart, setShowCliffChart] = useState(false);
 
@@ -568,8 +554,8 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
         <p className="text-gray-500 mb-4">The simulation returned incomplete data. Please try again.</p>
-        <button onClick={onReset} className="btn btn-primary">
-          Try Again
+        <button onClick={onTryAnother} className="btn btn-primary">
+          Try again
         </button>
       </div>
     );
@@ -580,7 +566,7 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SummaryCard
-          title="Net Income"
+          title="Net income"
           before={result.before.netIncome}
           after={result.after.netIncome}
           icon={
@@ -590,7 +576,7 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
           }
         />
         <SummaryCard
-          title="Total Taxes"
+          title="Total taxes"
           before={result.before.totalTax}
           after={result.after.totalTax}
           inverse
@@ -601,7 +587,7 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
           }
         />
         <SummaryCard
-          title="Benefits & Credits"
+          title="Benefits & credits"
           before={result.before.totalBenefits}
           after={result.after.totalBenefits}
           icon={
@@ -629,7 +615,7 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
                 : 'text-[#5A5A5A] hover:bg-[#F9FAFB]'
             }`}
           >
-            Key Changes
+            Key changes
           </button>
           <button
             onClick={() => setShowAllBenefits(true)}
@@ -639,7 +625,7 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
                 : 'text-[#5A5A5A] hover:bg-[#F9FAFB]'
             }`}
           >
-            All Programs ({result.before.metrics.length})
+            All programs ({result.before.metrics.length})
           </button>
         </div>
       </div>
@@ -670,12 +656,12 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
       <div className="flex justify-center">
         <button
           onClick={() => setShowCliffChart(!showCliffChart)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
           </svg>
-          {showCliffChart ? 'Hide' : 'Show'} Benefit Cliffs Analysis
+          {showCliffChart ? 'Hide' : 'Show'} benefit cliffs analysis
           <svg
             className={`w-4 h-4 transition-transform ${showCliffChart ? 'rotate-180' : ''}`}
             fill="none"
@@ -690,13 +676,13 @@ export default function ResultsView({ result, household, onReset }: ResultsViewP
       {/* Cliff Chart */}
       {showCliffChart && <CliffChart household={household} />}
 
-      {/* Reset Button */}
-      <div className="flex justify-center pt-4">
-        <button onClick={onReset} className="btn btn-secondary">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Try Another Scenario
+      {/* Actions */}
+      <div className="flex justify-center gap-3 pt-4">
+        <button onClick={onTryAnother} className="btn btn-primary">
+          Model another change
+        </button>
+        <button onClick={onReset} className="btn btn-ghost">
+          Start over with a new household
         </button>
       </div>
     </div>

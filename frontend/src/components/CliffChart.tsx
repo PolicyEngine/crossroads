@@ -199,14 +199,14 @@ export default function CliffChart({ household }: CliffChartProps) {
     return (
       <div className="card p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-            <svg className="w-5 h-5 text-purple-500 animate-spin" fill="none" viewBox="0 0 24 24">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-500 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Analyzing Benefit Cliffs</h3>
+            <h3 className="text-base font-semibold text-gray-900">Analyzing benefit cliffs</h3>
             <p className="text-sm text-gray-500">Calculating benefits across income levels...</p>
           </div>
         </div>
@@ -232,13 +232,13 @@ export default function CliffChart({ household }: CliffChartProps) {
     <div className="card p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-            <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
           </div>
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Benefit Cliffs Analysis</h3>
+            <h3 className="text-base font-semibold text-gray-900">Benefit cliffs analysis</h3>
             <p className="text-sm text-gray-500">
               How your benefits change as income increases
             </p>
@@ -251,21 +251,21 @@ export default function CliffChart({ household }: CliffChartProps) {
             onClick={() => setViewMode('netIncome')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               viewMode === 'netIncome'
-                ? 'bg-purple-100 text-purple-700'
+                ? 'bg-[#E6FFFA] text-[#285E61]'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Net Income
+            Net income
           </button>
           <button
             onClick={() => setViewMode('marginalRate')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               viewMode === 'marginalRate'
-                ? 'bg-purple-100 text-purple-700'
+                ? 'bg-[#E6FFFA] text-[#285E61]'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Marginal Rate
+            Marginal rate
           </button>
         </div>
       </div>
@@ -290,24 +290,24 @@ export default function CliffChart({ household }: CliffChartProps) {
           .slice(0, 3);
 
         return (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
             <div className="flex gap-2">
-              <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">
+                <p className="text-sm font-medium text-gray-700">
                   {cliffPoints.length} benefit cliff{cliffPoints.length !== 1 ? 's' : ''} detected
                 </p>
-                <p className="text-xs text-amber-600 mt-0.5">
-                  At certain income levels, earning more could reduce your total resources.
+                <p className="text-xs text-gray-500 mt-0.5">
+                  At certain income levels, earning more reduces total resources.
                 </p>
                 {topCauses.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {topCauses.map(([program]) => (
                       <span
                         key={program}
-                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800"
+                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700"
                       >
                         {PROGRAM_LABELS[program] || program}
                       </span>
@@ -327,8 +327,8 @@ export default function CliffChart({ household }: CliffChartProps) {
             <ComposedChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
               <defs>
                 <linearGradient id="netIncomeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -348,7 +348,7 @@ export default function CliffChart({ household }: CliffChartProps) {
               <Area
                 type="monotone"
                 dataKey="netIncome"
-                stroke="#8B5CF6"
+                stroke="#0EA5E9"
                 fill="url(#netIncomeGradient)"
                 strokeWidth={2}
               />
@@ -411,10 +411,10 @@ export default function CliffChart({ household }: CliffChartProps) {
               <Line
                 type="stepAfter"
                 dataKey="marginalRate"
-                stroke="#8B5CF6"
+                stroke="#0EA5E9"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: '#8B5CF6' }}
+                activeDot={{ r: 4, fill: '#0EA5E9' }}
               />
               {/* Current income marker */}
               {currentIncome > 0 && (
@@ -440,17 +440,17 @@ export default function CliffChart({ household }: CliffChartProps) {
       {/* Legend */}
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-0.5 bg-purple-500 rounded" />
-          <span>{viewMode === 'netIncome' ? 'Net Income' : 'Marginal Rate'}</span>
+          <div className="w-3 h-0.5 bg-sky-500 rounded" />
+          <span>{viewMode === 'netIncome' ? 'Net income' : 'Marginal rate'}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 bg-teal-500 rounded" style={{ borderStyle: 'dashed' }} />
-          <span>Your Current Income</span>
+          <span>Your current income</span>
         </div>
         {viewMode === 'marginalRate' && (
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-0.5 bg-red-400 rounded" style={{ borderStyle: 'dashed' }} />
-            <span>100% = Benefit Cliff</span>
+            <span>100% = benefit cliff</span>
           </div>
         )}
       </div>
@@ -460,12 +460,12 @@ export default function CliffChart({ household }: CliffChartProps) {
         <p className="text-xs text-gray-600">
           {viewMode === 'netIncome' ? (
             <>
-              <strong>Net Income</strong> = Gross Income - Taxes + Benefits + Tax Credits.
+              <strong>Net income</strong> = gross income − taxes + benefits + tax credits.
               The line shows how much you actually keep as your earnings change.
             </>
           ) : (
             <>
-              <strong>Marginal Rate</strong> shows how much of each additional dollar you lose to taxes
+              <strong>Marginal rate</strong> shows how much of each additional dollar you lose to taxes
               and benefit phase-outs. Rates above 100% mean earning more leaves you worse off.
             </>
           )}
