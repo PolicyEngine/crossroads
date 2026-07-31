@@ -35,7 +35,7 @@ def simulate(data: dict) -> dict:
     import sys
     sys.path.insert(0, "/root")
 
-    from crossroads.compare import compare
+    from crossroads.compare import compare, compare_multiple
     from crossroads.events import (
         ChildAgingOut,
         Divorce,
@@ -226,12 +226,35 @@ def simulate(data: dict) -> dict:
 
         # Run simulation
         household = create_household_from_request(data.get("household", {}))
-        event = create_event_from_request(
-            data.get("lifeEvent", {}).get("type"),
-            data.get("lifeEvent", {}).get("params", {}),
-            household,
-        )
-        result = compare(household, event)
+
+        # Support both single event and multiple events
+        life_events = data.get("lifeEvents", [])
+        single_event = data.get("lifeEvent")
+
+        if life_events:
+            # Multiple events mode
+            events = []
+            current_household = household
+            for evt in life_events:
+                event = create_event_from_request(
+                    evt.get("type"),
+                    evt.get("params", {}),
+                    current_household,
+                )
+                events.append(event)
+                current_household = event.apply(current_household)
+            result = compare_multiple(household, events)
+        elif single_event:
+            # Single event mode (backwards compatible)
+            event = create_event_from_request(
+                single_event.get("type"),
+                single_event.get("params", {}),
+                household,
+            )
+            result = compare(household, event)
+        else:
+            raise ValueError("No life event provided")
+
         response = format_result_for_frontend(result)
 
         # Cache the result

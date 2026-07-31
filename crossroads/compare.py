@@ -533,6 +533,74 @@ def compare(
     )
 
 
+@dataclass
+class CombinedEvent(LifeEvent):
+    """A wrapper that combines multiple life events into one."""
+
+    events: list[LifeEvent] = field(default_factory=list)
+
+    @property
+    def name(self) -> str:
+        if not self.events:
+            return "No events"
+        return " + ".join(e.name for e in self.events)
+
+    @property
+    def description(self) -> str:
+        if not self.events:
+            return "No life events selected"
+        return ", ".join(e.description for e in self.events)
+
+    def apply(self, household: Household) -> Household:
+        """Apply all events in sequence."""
+        current = household
+        for event in self.events:
+            current = event.apply(current)
+        return current
+
+    def validate(self, household: Household) -> list[str]:
+        """Validate all events can be applied in sequence."""
+        errors = []
+        current = household
+        for i, event in enumerate(self.events):
+            event_errors = event.validate(current)
+            if event_errors:
+                errors.extend([f"Event {i+1} ({event.name}): {e}" for e in event_errors])
+            else:
+                # Apply event to validate next one against updated household
+                current = event.apply(current)
+        return errors
+
+
+def compare_multiple(
+    household: Household,
+    events: list[LifeEvent],
+    variables: list[str] | None = None,
+) -> ComparisonResult:
+    """
+    Compare a household before and after multiple life events.
+
+    Events are applied in sequence, and the result shows the baseline
+    household compared to the final state after all events.
+
+    Args:
+        household: The baseline household before events.
+        events: List of life events to apply in order.
+        variables: Optional list of variables to compare.
+
+    Returns:
+        A ComparisonResult with the combined event.
+    """
+    if not events:
+        raise ValueError("At least one life event is required")
+
+    if len(events) == 1:
+        return compare(household, events[0], variables)
+
+    combined = CombinedEvent(events=events)
+    return compare(household, combined, variables)
+
+
 def calculate_cliff_analysis(
     household: Household,
     income_min: int = 0,

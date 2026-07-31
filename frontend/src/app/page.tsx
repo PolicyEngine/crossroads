@@ -1,17 +1,24 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import HouseholdForm from '@/components/HouseholdForm';
-import LifeEventSelector from '@/components/LifeEventSelector';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import HouseholdWizard from '@/components/HouseholdWizard';
+import ChangeWizard from '@/components/ChangeWizard';
 import ResultsView from '@/components/ResultsView';
-import { Household, LifeEventType, SimulationResult } from '@/types';
+import { Household, LifeEventType, SimulationResult, SelectedEvent, LIFE_EVENTS, US_STATES } from '@/types';
 
-type Step = 'household' | 'event' | 'results';
+interface SavedScenario {
+  id: string;
+  events: SelectedEvent[];
+  result: SimulationResult;
+}
 
-// URL encoding/decoding helpers
+function newScenarioId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// URL encoding/decoding helpers (single-event scenarios only)
 function encodeScenario(household: Household, event: LifeEventType, params: Record<string, unknown>): string {
-  const data = { h: household, e: event, p: params };
-  return btoa(JSON.stringify(data));
+  return btoa(JSON.stringify({ h: household, e: event, p: params }));
 }
 
 function decodeScenario(encoded: string): { household: Household; event: LifeEventType; params: Record<string, unknown> } | null {
@@ -39,80 +46,56 @@ function decodeScenario(encoded: string): { household: Household; event: LifeEve
   return null;
 }
 
-const DEFAULT_HOUSEHOLD: Household = {
-  state: 'CA',
-  filingStatus: 'single',
-  income: 50000,
-  spouseIncome: 0,
-  spouseAge: 30,
-  childAges: [],
-  age: 30,
-  hasESI: false,
-  spouseHasESI: false,
-  year: 2025,
-};
-
-const STEPS = [
-  { key: 'household' as const, label: 'Household', number: 1 },
-  { key: 'event' as const, label: 'Life Event', number: 2 },
-  { key: 'results' as const, label: 'Results', number: 3 },
-];
-
 export default function Home() {
-  const [step, setStep] = useState<Step>('household');
-  const [household, setHousehold] = useState<Household>(DEFAULT_HOUSEHOLD);
-  const [selectedEvent, setSelectedEvent] = useState<LifeEventType | null>(null);
-  const [eventParams, setEventParams] = useState<Record<string, unknown>>({});
-  const [result, setResult] = useState<SimulationResult | null>(null);
+  const [household, setHousehold] = useState<Household | null>(null);
+  const [partialHousehold, setPartialHousehold] = useState<Partial<Household>>({});
+  const [appliedEvents, setAppliedEvents] = useState<SelectedEvent[]>([]);
+  const [scenarios, setScenarios] = useState<SavedScenario[]>([]);
+  const [currentScenarioId, setCurrentScenarioId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showCopied, setShowCopied] = useState(false);
 
-  // Run simulation with given parameters
-  const runSimulation = useCallback(async (
-    h: Household,
-    event: LifeEventType,
-    params: Record<string, unknown>
-  ) => {
+  const result = scenarios.find((s) => s.id === currentScenarioId)?.result ?? null;
+  const otherScenarios = scenarios.filter((s) => s.id !== currentScenarioId);
+
+  const runSimulation = useCallback(async (h: Household, events: SelectedEvent[]) => {
+    if (events.length === 0) return;
     setIsLoading(true);
     setError(null);
-    setResult(null);
-    setStep('results');
-
     try {
+      // Single events use the lifeEvent field; combined scenarios send the
+      // ordered lifeEvents list.
+      const body: Record<string, unknown> = { household: h };
+      if (events.length === 1) {
+        body.lifeEvent = { type: events[0].type, params: events[0].params };
+      } else {
+        body.lifeEvents = events.map((e) => ({ type: e.type, params: e.params }));
+      }
+
       const response = await fetch('/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          household: h,
-          lifeEvent: { type: event, params },
-        }),
+        body: JSON.stringify(body),
       });
-
-      if (!response.ok) {
-        throw new Error('Simulation failed');
-      }
-
       const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      if (!data.before || !data.after) throw new Error('Invalid response from simulation');
 
-      // Check if API returned an error
-      if (data.error) {
-        throw new Error(data.error);
+      const id = newScenarioId();
+      setScenarios((prev) => [...prev, { id, events, result: data }]);
+      setCurrentScenarioId(id);
+
+      // Shareable link (single events only for now)
+      if (events.length === 1) {
+        const encoded = encodeScenario(h, events[0].type, events[0].params);
+        setShareUrl(`${window.location.origin}?s=${encoded}`);
+        window.history.replaceState({}, '', `?s=${encoded}`);
+      } else {
+        setShareUrl(null);
+        window.history.replaceState({}, '', window.location.pathname);
       }
-
-      // Validate the response has expected structure
-      if (!data.before || !data.after) {
-        throw new Error('Invalid response from simulation');
-      }
-
-      setResult(data);
-
-      // Update URL with shareable link
-      const encoded = encodeScenario(h, event, params);
-      const url = `${window.location.origin}?s=${encoded}`;
-      setShareUrl(url);
-      window.history.replaceState({}, '', `?s=${encoded}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -120,392 +103,521 @@ export default function Home() {
     }
   }, []);
 
-  // Check URL for shared scenario on page load
+  const restoreScenario = useCallback((s: SavedScenario, h: Household) => {
+    setCurrentScenarioId(s.id);
+    setAppliedEvents(s.events);
+    setError(null);
+    if (s.events.length === 1) {
+      const encoded = encodeScenario(h, s.events[0].type, s.events[0].params);
+      setShareUrl(`${window.location.origin}?s=${encoded}`);
+      window.history.replaceState({}, '', `?s=${encoded}`);
+    } else {
+      setShareUrl(null);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const removeScenario = useCallback((id: string) => {
+    setScenarios((prev) => prev.filter((s) => s.id !== id));
+    setCurrentScenarioId((curr) => (curr === id ? null : curr));
+  }, []);
+
+  // Check URL for a shared scenario on page load. The ref guards against
+  // StrictMode double-invocation creating duplicate scenarios.
+  const bootstrapped = useRef(false);
   useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('s');
     if (encoded) {
       const scenario = decodeScenario(encoded);
       if (scenario) {
+        const events = [{ type: scenario.event, params: scenario.params }];
         setHousehold(scenario.household);
-        setSelectedEvent(scenario.event);
-        setEventParams(scenario.params);
-        // Auto-run simulation
-        runSimulation(scenario.household, scenario.event, scenario.params);
+        setAppliedEvents(events);
+        runSimulation(scenario.household, events);
       }
     }
   }, [runSimulation]);
 
-  const handleSimulate = async () => {
-    if (!selectedEvent) return;
-    await runSimulation(household, selectedEvent, eventParams);
+  const handleWizardComplete = (h: Household) => {
+    setHousehold(h);
+    setAppliedEvents([]);
+    setScenarios([]);
+    setCurrentScenarioId(null);
+    setError(null);
   };
 
-  const handleShare = async () => {
-    if (shareUrl) {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setShowCopied(true);
-        setTimeout(() => setShowCopied(false), 2000);
-      } catch {
-        // Fallback for browsers that don't support clipboard API
-        const input = document.createElement('input');
-        input.value = shareUrl;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        setShowCopied(true);
-        setTimeout(() => setShowCopied(false), 2000);
-      }
+  const handleRun = () => {
+    if (household && appliedEvents.length > 0) {
+      runSimulation(household, appliedEvents);
     }
   };
 
-  const handleReset = () => {
-    setStep('household');
-    setSelectedEvent(null);
-    setEventParams({});
-    setResult(null);
+  const handleShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const input = document.createElement('input');
+      input.value = shareUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
+
+  const handleTryAnother = () => {
+    // Keep household + scenario history; clear the active result so the
+    // user can model a new what-if.
+    setAppliedEvents([]);
+    setCurrentScenarioId(null);
     setError(null);
     setShareUrl(null);
-    // Clear URL params
     window.history.replaceState({}, '', window.location.pathname);
   };
 
-  const canProceedToEvent = household.income >= 0;
-  const canSimulate = selectedEvent !== null;
+  const handleReset = () => {
+    setHousehold(null);
+    setPartialHousehold({});
+    setAppliedEvents([]);
+    setScenarios([]);
+    setCurrentScenarioId(null);
+    setError(null);
+    setShareUrl(null);
+    window.history.replaceState({}, '', window.location.pathname);
+  };
 
-  const currentStepIndex = STEPS.findIndex(s => s.key === step);
+  const eventsLabel = describeEvents(appliedEvents);
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      {step === 'household' && (
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#319795] via-[#2C7A7B] to-[#285E61]">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg fill=%22none%22 fill-rule=%22evenodd%22%3E%3Cg fill=%22%23ffffff%22 fill-opacity=%220.05%22%3E%3Cpath d=%22M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50" />
-          <div className="relative max-w-3xl mx-auto px-6 py-16 text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 tracking-tight">
-              How will life changes affect your finances?
-            </h1>
-            <p className="text-lg text-white/90 max-w-xl mx-auto leading-relaxed">
-              Explore how major life events impact your taxes, benefits, and net income
-              using PolicyEngine&apos;s simulation engine.
+    <div className="min-h-screen bg-[#F1F5F9]">
+      <div className="max-w-[1100px] mx-auto px-4 sm:px-6 pb-16">
+
+        {/* Hero card */}
+        <div className="bg-white border border-gray-200 rounded-xl p-7 shadow-sm mb-4 mt-6">
+          {result && appliedEvents.length > 0 && household ? (
+            <>
+              <div className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase text-[#285E61] bg-[#E6FFFA] px-3 py-1.5 rounded-full mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#319795]" />
+                {eventsLabel}
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
+                {getHeroHeadline(appliedEvents, result)}
+              </h1>
+              <p className="text-[15px] text-gray-500 leading-relaxed">
+                {householdSummaryLine(household)}
+              </p>
+              {(() => {
+                const changes = appliedEvents.flatMap((e) =>
+                  describeScenarioChanges(e.type, e.params, household),
+                );
+                if (changes.length === 0) return null;
+                return (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                      What changed
+                    </div>
+                    <div className="flex flex-wrap gap-x-5 gap-y-2">
+                      {changes.map((c, i) => (
+                        <div key={i} className="flex items-baseline gap-2 text-sm">
+                          <span className="text-gray-500">{c.label}</span>
+                          {c.before !== undefined && c.after !== undefined ? (
+                            <>
+                              <span className="text-gray-400 line-through tabular-nums">{c.before}</span>
+                              <span className="text-gray-300">to</span>
+                              <span className="font-semibold text-gray-900 tabular-nums">{c.after}</span>
+                            </>
+                          ) : (
+                            <span className="font-semibold text-gray-900">{c.text}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <div className="flex gap-5 flex-wrap mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500">
+                <span>Tax year: <b className="text-gray-900">{household.year}</b></span>
+                {shareUrl && (
+                  <button
+                    onClick={handleShare}
+                    className="ml-auto text-[#319795] hover:text-[#285E61] font-medium flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                    {showCopied ? 'Copied!' : 'Share'}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : household ? (
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase text-[#285E61] bg-[#E6FFFA] px-3 py-1.5 rounded-full mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#319795]" />
+                  Your household
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
+                  What if something changed?
+                </h1>
+                <p className="text-[15px] text-gray-500 leading-relaxed">
+                  Pick a life event below to see how it would affect your taxes, benefits, and
+                  net income.
+                </p>
+              </div>
+              <button
+                onClick={handleReset}
+                className="shrink-0 text-sm text-gray-400 hover:text-gray-600 transition-colors mt-1"
+              >
+                Start over
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase text-[#285E61] bg-[#E6FFFA] px-3 py-1.5 rounded-full mb-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#319795]" />
+                New scenario
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
+                See how a life event changes your taxes and benefits.
+              </h1>
+              <p className="text-[15px] text-gray-500 leading-relaxed max-w-2xl">
+                Tell us about your household and we&apos;ll model it with PolicyEngine&apos;s
+                simulation engine.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Household wizard (no household yet) */}
+        {!household && (
+          <>
+            <PartialSummary partial={partialHousehold} />
+            <HouseholdWizard
+              onComplete={handleWizardComplete}
+              onPartialChange={setPartialHousehold}
+            />
+          </>
+        )}
+
+        {/* Household entered: show change wizard until results are ready */}
+        {household && !isLoading && !result && !error && (
+          <ChangeWizard
+            household={household}
+            onApply={(events) => {
+              setAppliedEvents(events);
+              runSimulation(household, events);
+            }}
+          />
+        )}
+
+        {/* Loading */}
+        {isLoading && (
+          <div className="mt-4 bg-white border border-gray-200 rounded-xl p-12 shadow-sm flex flex-col items-center justify-center">
+            <div className="relative mb-6">
+              <div className="w-14 h-14 border-4 border-[#E6FFFA] rounded-full" />
+              <div className="absolute inset-0 w-14 h-14 border-4 border-[#319795] border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-gray-500 text-center">
+              Calculating how {eventsLabel.toLowerCase()} affects your taxes and benefits…
             </p>
           </div>
-        </div>
-      )}
-
-      {/* Progress Steps */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-center">
-            {STEPS.map((s, i) => {
-              const isActive = s.key === step;
-              const isCompleted = currentStepIndex > i;
-              // Allow navigation: always to step 1, to step 2 if household exists, to step 3 if results exist
-              const canNavigate =
-                s.key === 'household' ||
-                (s.key === 'event' && canProceedToEvent) ||
-                (s.key === 'results' && result !== null);
-
-              return (
-                <div key={s.key} className="flex items-center">
-                  <button
-                    onClick={() => canNavigate && !isActive && setStep(s.key)}
-                    disabled={!canNavigate}
-                    className={`flex items-center gap-2.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-[#319795] text-white shadow-sm'
-                        : canNavigate
-                        ? 'bg-[#E6FFFA] text-[#285E61] hover:bg-[#B2F5EA] cursor-pointer'
-                        : 'bg-[#F2F4F7] text-[#9CA3AF]'
-                    }`}
-                  >
-                    <span
-                      className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-semibold ${
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : isCompleted
-                          ? 'bg-[#319795] text-white'
-                          : canNavigate
-                          ? 'bg-[#81E6D9] text-[#285E61]'
-                          : 'bg-[#E2E8F0] text-[#9CA3AF]'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        s.number
-                      )}
-                    </span>
-                    <span className="hidden sm:inline">{s.label}</span>
-                  </button>
-                  {i < STEPS.length - 1 && (
-                    <div
-                      className={`w-8 sm:w-12 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors ${
-                        currentStepIndex > i ? 'bg-[#319795]' : 'bg-[#E2E8F0]'
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm flex items-start gap-3">
-            <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{error}</span>
-          </div>
         )}
 
-        {/* Step Content */}
-        {step === 'household' && (
-          <div className="animate-fadeIn">
-            <HouseholdForm
-              household={household}
-              onChange={setHousehold}
-              disabled={isLoading}
-            />
-            <div className="mt-8 flex justify-end">
+        {/* Error */}
+        {!isLoading && error && (
+          <div className="mt-4 bg-white border border-gray-200 rounded-xl p-8 shadow-sm text-center">
+            <p className="text-red-600 font-medium mb-1">Simulation failed</p>
+            <p className="text-gray-500 text-sm mb-4">{error}</p>
+            <div className="flex justify-center gap-3 flex-wrap">
               <button
-                onClick={() => setStep('event')}
-                disabled={!canProceedToEvent}
-                className="btn btn-primary px-8"
-              >
-                Continue
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 'event' && (
-          <div className="animate-fadeIn">
-            <LifeEventSelector
-              selectedEvent={selectedEvent}
-              onSelect={setSelectedEvent}
-              eventParams={eventParams}
-              onParamsChange={setEventParams}
-              household={household}
-              disabled={isLoading}
-            />
-            <div className="mt-8 flex justify-between">
-              <button
-                onClick={() => setStep('household')}
-                disabled={isLoading}
+                onClick={handleRun}
+                disabled={appliedEvents.length === 0}
                 className="btn btn-secondary"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back
+                Try again
               </button>
-              <button
-                onClick={handleSimulate}
-                disabled={!canSimulate || isLoading}
-                className="btn btn-primary px-8"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="spinner" />
-                    Simulating...
-                  </>
-                ) : (
-                  <>
-                    See Results
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </>
-                )}
+              <button onClick={handleTryAnother} className="btn btn-ghost">
+                Pick a different change
+              </button>
+              <button onClick={handleReset} className="btn btn-ghost">
+                Start over with a new household
               </button>
             </div>
           </div>
         )}
 
-        {step === 'results' && (
-          <div className="animate-fadeIn">
-            {isLoading ? (
-              /* Loading State */
-              <div className="card p-8 sm:p-12">
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 border-4 border-[#E6FFFA] rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#319795] rounded-full border-t-transparent animate-spin"></div>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Running Simulation</h3>
-                  <p className="text-gray-500 text-center max-w-sm">
-                    Calculating how {selectedEvent?.replace(/_/g, ' ')} will affect your taxes and benefits...
-                  </p>
-                </div>
-              </div>
-            ) : error ? (
-              /* Error State */
-              <div className="card p-8 sm:p-12">
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
-                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Simulation Failed</h3>
-                  <p className="text-gray-500 text-center max-w-sm mb-6">
-                    {error}
-                  </p>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setStep('event')}
-                      className="btn btn-secondary"
-                    >
-                      Back to Life Event
-                    </button>
-                    <button
-                      onClick={handleSimulate}
-                      className="btn btn-primary"
-                    >
-                      Try Again
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : result ? (
-              <>
-                {/* Scenario Summary */}
-                <div className="mb-8 p-5 bg-[#E6FFFA] rounded-xl border border-[#319795]/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">Your Scenario</h3>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setStep('household')}
-                        className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
-                      >
-                        Edit Household
-                      </button>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        onClick={() => setStep('event')}
-                        className="text-sm text-[#285E61] hover:text-[#319795] font-medium"
-                      >
-                        Change Event
-                      </button>
-                      <span className="text-gray-300">|</span>
-                      <button
-                        onClick={handleShare}
-                        className="text-sm text-[#285E61] hover:text-[#319795] font-medium inline-flex items-center gap-1"
-                      >
-                        {showCopied ? (
-                          <>
-                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                            </svg>
-                            Share
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">State</span>
-                      <p className="font-medium text-gray-900">
-                        {selectedEvent === 'moving_states' && eventParams.newState
-                          ? `${household.state} → ${eventParams.newState}`
-                          : household.state}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Tax Year</span>
-                      <p className="font-medium text-gray-900">
-                        {household.year || 2025}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Filing Status</span>
-                      <p className="font-medium text-gray-900 capitalize">
-                        {household.filingStatus.replace(/_/g, ' ')}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Life Event</span>
-                      <p className="font-medium text-gray-900 capitalize">
-                        {selectedEvent?.replace(/_/g, ' ')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mt-3 pt-3 border-t border-[#319795]/10">
-                    <div>
-                      <span className="text-gray-500">Your Income</span>
-                      <p className="font-medium text-gray-900">
-                        {selectedEvent === 'changing_income' && eventParams.newIncome !== undefined
-                          ? `$${household.income.toLocaleString()} → $${(eventParams.newIncome as number).toLocaleString()}`
-                          : `$${household.income.toLocaleString()}`}
-                      </p>
-                    </div>
-                    {(household.filingStatus === 'married_jointly' || household.filingStatus === 'married_separately') && (
-                      <div>
-                        <span className="text-gray-500">Spouse Income</span>
-                        <p className="font-medium text-gray-900">
-                          {selectedEvent === 'changing_income' && eventParams.newSpouseIncome !== undefined
-                            ? `$${(household.spouseIncome ?? 0).toLocaleString()} → $${(eventParams.newSpouseIncome as number).toLocaleString()}`
-                            : `$${(household.spouseIncome ?? 0).toLocaleString()}`}
-                        </p>
-                      </div>
-                    )}
-                    {household.childAges.length > 0 && (
-                      <div>
-                        <span className="text-gray-500">Children</span>
-                        <p className="font-medium text-gray-900">
-                          {household.childAges.length} (ages {household.childAges.join(', ')})
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <ResultsView result={result} household={household} onReset={handleReset} />
-              </>
-            ) : null}
+        {/* Results */}
+        {!isLoading && !error && result && household && (
+          <div className="mt-4">
+            <ResultsView
+              result={result}
+              household={household}
+              onTryAnother={handleTryAnother}
+              onReset={handleReset}
+            />
           </div>
         )}
-      </div>
 
-      {/* Footer */}
-      <footer className="mt-auto py-10 text-center" role="contentinfo">
-        <p className="text-sm text-gray-500">
-          Powered by{' '}
-          <a
-            href="https://policyengine.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#319795] hover:text-[#285E61] font-medium transition-colors"
-          >
-            PolicyEngine
-          </a>
-        </p>
-      </footer>
+        {/* Saved scenarios: older results from this household */}
+        {household && otherScenarios.length > 0 && (
+          <div className="mt-6">
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 px-1">
+              Compared scenarios
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {otherScenarios.map((s) => (
+                <ScenarioCard
+                  key={s.id}
+                  scenario={s}
+                  onClick={() => restoreScenario(s, household)}
+                  onRemove={() => removeScenario(s.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-10 text-center" role="contentinfo">
+          <p className="text-sm text-gray-500">
+            Powered by{' '}
+            <a
+              href="https://policyengine.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#319795] hover:text-[#285E61] font-medium transition-colors"
+            >
+              PolicyEngine
+            </a>
+          </p>
+        </footer>
+      </div>
     </div>
   );
+}
+
+function describeEvents(events: SelectedEvent[]): string {
+  if (events.length === 0) return 'This change';
+  if (events.length === 1) {
+    return LIFE_EVENTS.find((e) => e.type === events[0].type)?.label ?? events[0].type;
+  }
+  return `${events.length} combined changes`;
+}
+
+function householdSummaryLine(h: Household): string {
+  const married = h.filingStatus === 'married_jointly' || h.filingStatus === 'married_separately';
+  const stateName = US_STATES.find((s) => s.code === h.state)?.name ?? h.state;
+  const totalIncome = h.income + (married ? h.spouseIncome ?? 0 : 0);
+  const parts = [
+    stateName,
+    married ? `Married, ages ${h.age} & ${h.spouseAge}` : `Single, age ${h.age}`,
+    `$${totalIncome.toLocaleString()}/yr household income`,
+  ];
+  if (h.childAges.length > 0) {
+    parts.push(`${h.childAges.length} child${h.childAges.length > 1 ? 'ren' : ''}`);
+  }
+  return parts.join(' · ');
+}
+
+function PartialSummary({ partial }: { partial: Partial<Household> }) {
+  const items: { label: string; value: string }[] = [];
+  if (partial.state) {
+    items.push({
+      label: 'State',
+      value: US_STATES.find((s) => s.code === partial.state)?.name ?? partial.state,
+    });
+  }
+  if (partial.year) {
+    items.push({ label: 'Tax year', value: String(partial.year) });
+  }
+  if (partial.filingStatus) {
+    const labels: Record<Household['filingStatus'], string> = {
+      single: 'Single',
+      married_jointly: 'Married filing jointly',
+      married_separately: 'Married filing separately',
+      head_of_household: 'Head of household',
+    };
+    items.push({ label: 'Filing', value: labels[partial.filingStatus] });
+  }
+  if (partial.age && partial.age > 0) {
+    const married =
+      partial.filingStatus === 'married_jointly' || partial.filingStatus === 'married_separately';
+    items.push({
+      label: 'Age',
+      value: married && partial.spouseAge ? `${partial.age} & ${partial.spouseAge}` : `${partial.age}`,
+    });
+  }
+  if (partial.income !== undefined && partial.income > 0) {
+    const total = partial.income + (partial.spouseIncome ?? 0);
+    items.push({ label: 'Income', value: `$${total.toLocaleString()}/yr` });
+  }
+  if (partial.hasESI !== undefined || partial.spouseHasESI !== undefined) {
+    items.push({
+      label: 'Job coverage',
+      value: partial.hasESI || partial.spouseHasESI ? 'Yes' : 'No',
+    });
+  }
+  if (partial.childAges && partial.childAges.length > 0) {
+    items.push({
+      label: 'Children',
+      value: `${partial.childAges.length} (ages ${partial.childAges.join(', ')})`,
+    });
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mb-4 bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
+      <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
+        So far
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-2">
+        {items.map((item) => (
+          <div key={item.label}>
+            <div className="text-[10px] uppercase tracking-wider text-gray-400">{item.label}</div>
+            <div className="text-sm font-semibold text-gray-900">{item.value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface ScenarioCardProps {
+  scenario: SavedScenario;
+  onClick: () => void;
+  onRemove: () => void;
+}
+
+function ScenarioCard({ scenario, onClick, onRemove }: ScenarioCardProps) {
+  const label = describeEvents(scenario.events);
+  const delta = scenario.result.diff?.netIncome ?? 0;
+  const isGain = delta > 0.5;
+  const isLoss = delta < -0.5;
+  const tone = isGain ? 'text-green-600' : isLoss ? 'text-red-600' : 'text-gray-500';
+  const sign = isGain ? '+' : isLoss ? '−' : '';
+  const amount = `$${Math.abs(Math.round(delta)).toLocaleString()}`;
+  return (
+    <div className="relative group">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left bg-white border border-gray-200 hover:border-[#319795] hover:shadow-sm rounded-xl p-3 pr-8 transition-all"
+      >
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-[#285E61] mb-1">
+          {label}
+        </div>
+        <div className={`text-base font-semibold tabular-nums ${tone}`}>
+          {isGain || isLoss ? `${sign}${amount}/yr net income` : 'No net income change'}
+        </div>
+      </button>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        aria-label="Remove scenario"
+        className="absolute top-2 right-2 p-1 text-gray-300 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+// Structured "what changed" entries for the result hero. Each entry has a
+// label and either a before/after pair or a single text value. Skips fields
+// the user didn't actually change.
+interface ScenarioChange {
+  label: string;
+  before?: string;
+  after?: string;
+  text?: string;
+}
+
+function describeScenarioChanges(
+  eventType: LifeEventType,
+  params: Record<string, unknown>,
+  household: Household,
+): ScenarioChange[] {
+  const fmt = (annual: number) => `$${Math.round(annual).toLocaleString()}/yr`;
+  const out: ScenarioChange[] = [];
+
+  switch (eventType) {
+    case 'having_baby': {
+      const n = (params.numBabies as number) ?? 1;
+      out.push({ label: 'New baby', text: n === 1 ? '1 baby' : `${n} babies` });
+      return out;
+    }
+    case 'getting_married': {
+      const spouseAge = params.spouseAge as number | undefined;
+      const spouseIncome = params.spouseIncome as number | undefined;
+      const spouseChildAges = (params.spouseChildAges as number[] | undefined) ?? [];
+      const parts: string[] = [];
+      if (spouseAge) parts.push(`age ${spouseAge}`);
+      if (spouseIncome !== undefined && spouseIncome > 0) parts.push(`${fmt(spouseIncome)} income`);
+      if (spouseChildAges.length > 0) {
+        parts.push(`${spouseChildAges.length} child${spouseChildAges.length > 1 ? 'ren' : ''}`);
+      }
+      out.push({ label: 'Adding spouse', text: parts.length > 0 ? parts.join(', ') : 'New spouse' });
+      return out;
+    }
+    case 'divorce': {
+      const childrenKeeping = params.childrenKeeping as number | undefined;
+      if (household.childAges.length > 0 && childrenKeeping !== undefined) {
+        const leaving = household.childAges.length - childrenKeeping;
+        out.push({
+          label: 'Children',
+          text: `${childrenKeeping} of ${household.childAges.length} stay with you${leaving > 0 ? `, ${leaving} with ex-spouse` : ''}`,
+        });
+      }
+      out.push({ label: 'Separating', text: 'from spouse' });
+      return out;
+    }
+    case 'moving_states': {
+      const newState = (params.newState as string) ?? household.state;
+      if (newState !== household.state) {
+        out.push({ label: 'State', before: household.state, after: newState });
+      }
+      return out;
+    }
+    case 'changing_income': {
+      const newIncome = (params.newIncome as number) ?? household.income;
+      if (newIncome !== household.income) {
+        out.push({ label: 'Your income', before: fmt(household.income), after: fmt(newIncome) });
+      }
+      const newSpouseIncome = params.newSpouseIncome as number | undefined;
+      if (newSpouseIncome !== undefined && newSpouseIncome !== (household.spouseIncome ?? 0)) {
+        out.push({
+          label: 'Spouse income',
+          before: fmt(household.spouseIncome ?? 0),
+          after: fmt(newSpouseIncome),
+        });
+      }
+      return out;
+    }
+    case 'losing_esi':
+      out.push({ label: 'Employer coverage', text: 'ending' });
+      return out;
+    default:
+      return out;
+  }
+}
+
+// Build the hero headline from the net income delta in the result so the
+// copy can't contradict the numbers beneath it.
+function getHeroHeadline(events: SelectedEvent[], result: SimulationResult): string {
+  const subject = describeEvents(events);
+  const delta = result.diff?.netIncome ?? 0;
+  const amount = `$${Math.abs(Math.round(delta)).toLocaleString()}`;
+  if (delta > 0.5) return `${subject} raises your annual net income by ${amount}.`;
+  if (delta < -0.5) return `${subject} lowers your annual net income by ${amount}.`;
+  return `${subject} leaves your annual net income unchanged.`;
 }

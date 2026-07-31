@@ -23,8 +23,13 @@ export interface LifeEvent {
   type: LifeEventType;
   label: string;
   description: string;
-  icon: string;
   params?: Record<string, unknown>;
+}
+
+// For tracking selected events with their parameters
+export interface SelectedEvent {
+  type: LifeEventType;
+  params: Record<string, unknown>;
 }
 
 export interface BenefitMetric {
@@ -73,39 +78,33 @@ export interface SimulationResult {
 export const LIFE_EVENTS: LifeEvent[] = [
   {
     type: 'having_baby',
-    label: 'Having a Baby',
+    label: 'Having a baby',
     description: 'Add a new child to your household',
-    icon: '👶',
   },
   {
     type: 'getting_married',
-    label: 'Getting Married',
+    label: 'Getting married',
     description: 'Combine households with a spouse',
-    icon: '💍',
   },
   {
     type: 'divorce',
-    label: 'Getting Divorced',
+    label: 'Getting divorced',
     description: 'Separate from your spouse',
-    icon: '💔',
   },
   {
     type: 'moving_states',
-    label: 'Moving States',
+    label: 'Moving states',
     description: 'Relocate to a different state',
-    icon: '🏠',
   },
   {
     type: 'changing_income',
-    label: 'Changing Income',
-    description: 'Simulate a raise or income change',
-    icon: '💰',
+    label: 'Changing income',
+    description: 'A raise, a pay cut, or a job change',
   },
   {
     type: 'losing_esi',
-    label: 'Losing Health Insurance',
-    description: 'Lose employer-sponsored health insurance',
-    icon: '🏥',
+    label: 'Losing health insurance',
+    description: 'Employer-sponsored coverage ends',
   },
 ];
 
