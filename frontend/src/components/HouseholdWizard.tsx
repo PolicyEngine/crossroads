@@ -63,7 +63,7 @@ export default function HouseholdWizard({ onComplete, onPartialChange }: Househo
   const [step, setStep] = useState(1);
 
   const [state, setState] = useState('');
-  const [year, setYear] = useState(2025);
+  const [year, setYear] = useState(2026);
 
   const [filingStatus, setFilingStatus] = useState<FilingStatus>('single');
   const [filingTouched, setFilingTouched] = useState(false);

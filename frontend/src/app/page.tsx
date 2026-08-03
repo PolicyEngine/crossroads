@@ -36,7 +36,7 @@ function decodeScenario(encoded: string): { household: Household; event: LifeEve
         age: data.h.age ?? 30,
         hasESI: data.h.hasESI ?? false,
         spouseHasESI: data.h.spouseHasESI ?? false,
-        year: data.h.year ?? 2025,
+        year: data.h.year ?? 2026,
       };
       return { household, event: data.e, params: data.p || {} };
     }
